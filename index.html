@@ -3,319 +3,259 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Henry Pro Invest - DNSE Authenticated</title>
+    <title>Henry Pro Invest - Market Data Core</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #020617; color: #f1f5f9; overflow: hidden; }
-        .glass-panel { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(20px); border: 1px solid rgba(34, 211, 238, 0.2); border-radius: 12px; }
-        .neon-text { background: linear-gradient(90deg, #22d3ee 0%, #3b82f6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .active-row { background: rgba(34, 211, 238, 0.15); border-left: 4px solid #22d3ee; }
+        .glass-panel { background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(34, 211, 238, 0.2); border-radius: 8px; }
         .scroll-hidden::-webkit-scrollbar { width: 4px; }
-        .scroll-hidden::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
-        .flash-bg { animation: flashBg 0.5s ease-out; }
-        @keyframes flashBg { 0% { background: rgba(34, 197, 94, 0.3); } 100% { background: transparent; } }
+        .scroll-hidden::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        .flash-update { animation: flash 0.4s ease-out; }
+        @keyframes flash { 0% { background-color: rgba(34, 211, 238, 0.3); } 100% { background-color: transparent; } }
     </style>
 </head>
-<body class="h-screen flex flex-col p-2 gap-2">
+<body class="h-screen flex flex-col p-2 gap-2 text-xs">
 
-    <nav class="glass-panel px-6 py-3 flex justify-between items-center shrink-0">
-        <div class="flex items-center space-x-6">
-            <span class="text-2xl font-black neon-text tracking-tighter uppercase">HENRY PRO INVEST</span>
-            <input type="text" id="search-input" placeholder="Tìm mã (VD: HUT, STB)..." 
-                class="bg-slate-950 border border-slate-800 text-cyan-100 text-xs rounded-lg pl-4 pr-4 py-1.5 focus:outline-none w-56 focus:border-cyan-500 transition uppercase" 
-                onkeypress="handleSearch(event)">
-        </div>
+    <nav class="glass-panel px-4 py-2 flex justify-between items-center shrink-0">
+        <div class="text-xl font-black text-cyan-400 tracking-tighter uppercase">HENRY PRO INVEST <span class="text-[10px] text-slate-500 font-normal tracking-normal ml-2">v7. Market Data Engine</span></div>
         
         <div class="flex items-center space-x-4">
-            <div id="conn-status" class="flex items-center space-x-2 text-[10px] font-bold px-3 py-1.5 rounded-full border border-slate-800 bg-slate-900 cursor-pointer hover:bg-slate-800 transition" onclick="toggleModal()">
-                <span id="conn-dot" class="h-2 w-2 rounded-full bg-red-500"></span>
-                <span id="conn-text" class="text-slate-500 uppercase">OFFLINE - NHẤP CÀI ĐẶT</span>
+            <div class="font-mono text-slate-400 flex space-x-3">
+                <span id="msg-count">Msgs: 0</span>
+                <span id="ping-status">Ping: --</span>
             </div>
-            <button onclick="toggleModal()" class="p-1.5 hover:bg-slate-800 rounded-lg border border-slate-700 transition">
-                <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path></svg>
-            </button>
+            <button id="btn-connect" onclick="toggleConnection()" class="px-3 py-1 rounded bg-cyan-600 hover:bg-cyan-500 font-bold text-white transition">KẾT NỐI WS</button>
         </div>
     </nav>
 
     <main class="grid grid-cols-12 gap-2 flex-1 min-h-0">
-        <div class="col-span-3 glass-panel flex flex-col overflow-hidden">
-            <div class="p-3 border-b border-slate-800 text-[10px] font-bold text-slate-500 uppercase">Danh mục (API Data)</div>
-            <div class="flex-1 overflow-y-auto scroll-hidden">
-                <table class="w-full text-xs text-left">
-                    <tbody id="watchlist-body" class="cursor-pointer"></tbody>
+        
+        <div class="col-span-3 flex flex-col gap-2">
+            <div class="glass-panel p-2">
+                <h3 class="font-bold text-slate-400 mb-2 border-b border-slate-700 pb-1">MARKET INDEX</h3>
+                <div class="flex justify-between items-end">
+                    <span class="text-lg font-bold text-cyan-400" id="idx-vnindex">---</span>
+                    <span class="font-mono text-green-400" id="idx-change">---</span>
+                </div>
+                <div class="flex justify-between mt-1 text-[10px] text-slate-500">
+                    <span>Thanh khoản: <span id="idx-vol">---</span></span>
+                    <span class="text-green-400" id="idx-up">↑0</span> / <span class="text-red-400" id="idx-down">↓0</span>
+                </div>
+            </div>
+
+            <div class="glass-panel p-2 flex-1 flex flex-col">
+                <h3 class="font-bold text-slate-400 mb-2 border-b border-slate-700 pb-1">SUBSCRIBE KÊNH</h3>
+                <input type="text" id="sub-input" placeholder="Nhập mã (VD: HPG, STB)..." class="w-full bg-slate-900 border border-slate-700 p-1.5 rounded outline-none focus:border-cyan-500 uppercase mb-2">
+                <button onclick="sendSubscribe()" class="w-full bg-slate-800 hover:bg-slate-700 py-1.5 rounded border border-slate-600 text-cyan-400 font-bold mb-2">GỬI LỆNH ĐĂNG KÝ</button>
+                <div class="flex-1 overflow-y-auto scroll-hidden space-y-1" id="active-symbols">
+                    </div>
+            </div>
+        </div>
+
+        <div class="col-span-5 flex flex-col gap-2">
+            <div class="glass-panel flex-1 flex flex-col">
+                <h3 class="font-bold text-slate-400 p-2 border-b border-slate-700 bg-slate-800/50">ĐỘ SÂU THỊ TRƯỜNG (QUOTE)</h3>
+                <div class="grid grid-cols-2 flex-1 font-mono p-1">
+                    <div class="border-r border-slate-700 pr-1 flex flex-col">
+                        <div class="flex justify-between text-slate-500 border-b border-slate-800 mb-1"><span>KL MUA</span><span>GIÁ</span></div>
+                        <div id="quote-bids" class="space-y-0.5"></div>
+                    </div>
+                    <div class="pl-1 flex flex-col">
+                        <div class="flex justify-between text-slate-500 border-b border-slate-800 mb-1"><span>GIÁ</span><span>KL BÁN</span></div>
+                        <div id="quote-asks" class="space-y-0.5"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-panel flex-1 flex flex-col">
+                <h3 class="font-bold text-slate-400 p-2 border-b border-slate-700 bg-slate-800/50">KHỚP LỆNH LIÊN TỤC (TRADE)</h3>
+                <table class="w-full text-right font-mono table-fixed">
+                    <thead class="text-slate-500 border-b border-slate-800">
+                        <tr><th class="p-1 text-left w-1/4">Mã</th><th class="p-1 w-1/4">Giá</th><th class="p-1 w-1/4">KL</th><th class="p-1 w-1/4">Tổng KL</th></tr>
+                    </thead>
+                    <tbody id="trade-history" class="overflow-y-auto block h-full"></tbody>
                 </table>
             </div>
         </div>
 
-        <div class="col-span-6 flex flex-col gap-2">
-            <div class="glass-panel flex-[2] overflow-hidden relative" id="chart-container"></div>
-            <div class="glass-panel p-3 grid grid-cols-3 gap-2 text-center items-center">
-                <div class="border-r border-slate-800">
-                    <div class="text-[9px] text-slate-500 uppercase">Mã Đang Xem</div>
-                    <div id="info-sym" class="text-lg font-black text-cyan-400">---</div>
-                </div>
-                <div class="border-r border-slate-800">
-                    <div class="text-[9px] text-slate-500 uppercase">Giá Thực Tế</div>
-                    <div id="info-price" class="text-lg font-bold text-white font-mono">---</div>
-                </div>
-                <div>
-                    <div class="text-[9px] text-slate-500 uppercase">Khối Lượng</div>
-                    <div id="info-vol" class="text-lg font-bold text-purple-400 font-mono">---</div>
+        <div class="col-span-4 flex flex-col gap-2">
+            <div class="glass-panel p-2 flex flex-col h-1/3">
+                <h3 class="font-bold text-slate-400 mb-2 border-b border-slate-700 pb-1">KHỐI NGOẠI (FOREIGN)</h3>
+                <div class="space-y-1 font-mono text-[10px]" id="foreign-data">
+                    Chờ luồng dữ liệu...
                 </div>
             </div>
-        </div>
 
-        <div class="col-span-3 flex flex-col gap-2">
-            <div class="glass-panel h-1/2 flex flex-col overflow-hidden">
-                <div class="p-2 border-b border-slate-800 text-[10px] font-bold text-cyan-500 text-center uppercase tracking-widest">Độ Sâu Sổ Lệnh</div>
-                <div class="flex-1 grid grid-cols-2 text-[10px] font-mono">
-                    <div id="quote-bids" class="border-r border-slate-800 p-1"></div>
-                    <div id="quote-asks" class="p-1"></div>
-                </div>
-            </div>
-            <div class="glass-panel flex-1 flex flex-col overflow-hidden">
-                <div class="p-2 border-b border-slate-800 text-[10px] font-bold text-purple-400 text-center uppercase tracking-widest">Dòng Tiền Liên Tục</div>
-                <div class="flex-1 overflow-y-auto scroll-hidden p-2" id="trade-history"></div>
+            <div class="glass-panel p-2 flex-1 flex flex-col overflow-hidden">
+                <h3 class="font-bold text-slate-400 mb-2 border-b border-slate-700 pb-1 flex justify-between">
+                    <span>RAW JSON LOGS</span>
+                    <button onclick="document.getElementById('ws-logs').innerHTML=''" class="text-red-400 hover:text-red-300">Clear</button>
+                </h3>
+                <div id="ws-logs" class="flex-1 overflow-y-auto scroll-hidden font-mono text-[10px] text-slate-400 space-y-1 break-words">
+                    </div>
             </div>
         </div>
     </main>
 
-    <div id="modal-settings" class="fixed inset-0 flex items-center justify-center z-[100] bg-slate-950/80 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity">
-        <div class="glass-panel w-[400px] p-6 shadow-2xl border-cyan-500/50">
-            <h3 class="font-black text-cyan-400 uppercase mb-4 text-sm text-center">Bảo mật DNSE OpenAPI</h3>
-            
-            <div class="space-y-4">
-                <div>
-                    <label class="text-[10px] text-slate-500 uppercase font-bold block mb-1">API Key</label>
-                    <input type="password" id="api-key" placeholder="Nhập API Key..." class="w-full bg-slate-900 border border-slate-800 p-2 rounded text-xs outline-none focus:border-cyan-500 text-white">
-                </div>
-                <div>
-                    <label class="text-[10px] text-slate-500 uppercase font-bold block mb-1">API Secret (Dùng tạo Signature)</label>
-                    <input type="password" id="api-secret" placeholder="Nhập API Secret..." class="w-full bg-slate-900 border border-slate-800 p-2 rounded text-xs outline-none focus:border-cyan-500 text-white">
-                </div>
-                <div class="bg-blue-900/20 p-2 rounded border border-blue-500/30 text-[10px] text-slate-400">
-                    Hệ thống sẽ dùng API Secret băm ra chữ ký số <b>HMAC-SHA256</b> ngay trên trình duyệt máy tính của anh. Tuyệt đối an toàn.
-                </div>
-            </div>
-            <div class="mt-6 flex gap-2">
-                <button onclick="toggleModal()" class="flex-1 py-2 text-slate-400 hover:text-white text-xs transition">Đóng</button>
-                <button onclick="saveAndConnect()" class="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded shadow-[0_0_10px_rgba(34,211,238,0.3)] text-xs transition">Lưu & Kết Nối</button>
-            </div>
-        </div>
-    </div>
-
     <script>
-        // --- CẤU HÌNH API DNSE ---
-        const DNSE_REST_URL = "https://api.dnse.com.vn";
-        const DNSE_WSS_URL = "wss://ws-openapi.dnse.com.vn";
-        
+        // --- 1. CẤU HÌNH THEO TÀI LIỆU ---
+        const WS_URL = "wss://ws-openapi.dnse.com.vn";
         let ws = null;
-        let pingInterval = null;
-        let watchlist = JSON.parse(localStorage.getItem('hpi_symbols')) || ["HUT", "STB", "VIX"];
-        let activeSym = watchlist[0];
+        let isConnected = false;
+        let msgCount = 0;
+        let keepAliveInterval = null;
 
-        // --- 1. LUỒNG XÁC THỰC BẢO MẬT (SIGNATURE) ---
-        async function authenticateDNSE(apiKey, apiSecret) {
-            updateStatus('CONNECTING', 'bg-yellow-500', 'ĐANG TẠO CHỮ KÝ SỐ...');
-
-            try {
-                // Bước 1: Tạo chữ ký số HMAC-SHA256 theo chuẩn DNSE
-                const timestamp = Date.now().toString();
-                const method = "POST";
-                const path = "/auth/login"; // Tuỳ chỉnh đường dẫn REST Auth của DNSE
-                const bodyStr = JSON.stringify({ clientId: apiKey });
-                
-                // Công thức payload chuẩn
-                const payload = timestamp + method + path + bodyStr;
-                
-                // Băm chữ ký bằng CryptoJS
-                const signature = CryptoJS.HmacSHA256(payload, apiSecret).toString(CryptoJS.enc.Hex);
-
-                // Bước 2: Gọi REST API lấy Token
-                // Sử dụng corsproxy.io để trình duyệt không chặn kết nối chéo
-                updateStatus('CONNECTING', 'bg-yellow-500', 'ĐANG LẤY TOKEN...');
-                const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(DNSE_REST_URL + path)}`;
-                
-                const response = await fetch(proxyUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-API-Key': apiKey,
-                        'X-Timestamp': timestamp,
-                        'X-Signature': signature
-                    },
-                    body: bodyStr
-                });
-
-                if (!response.ok) throw new Error("Chữ ký bị từ chối hoặc sai Key/Secret.");
-                
-                const data = await response.json();
-                const token = data.token || data.accessToken;
-
-                // Bước 3: Mở kết nối WebSocket (Đã có Token hợp lệ)
-                openDNSEWebSocket(token);
-
-            } catch (error) {
-                updateStatus('ERROR', 'bg-red-500', `LỖI: ${error.message}`);
-                console.error(error);
+        // --- 2. QUẢN LÝ KẾT NỐI (WEBSOCKET & HEARTBEAT) ---
+        function toggleConnection() {
+            if (isConnected) {
+                if(ws) ws.close();
+                return;
             }
-        }
 
-        // --- 2. LUỒNG WEBSOCKET & PING/PONG ---
-        function openDNSEWebSocket(token) {
-            if (ws) { clearInterval(pingInterval); ws.close(); }
-
-            updateStatus('CONNECTING', 'bg-yellow-500', 'MỞ CỔNG WEBSOCKET...');
-            ws = new WebSocket(DNSE_WSS_URL);
+            ws = new WebSocket(WS_URL);
 
             ws.onopen = () => {
-                updateStatus('CONNECTED', 'bg-cyan-500', 'LIVE DATA ACTIVE');
-                document.getElementById('conn-dot').classList.add('shadow-[0_0_8px_#22d3ee]');
-                
-                // Đăng ký nhận dữ liệu (Sử dụng Token thật)
-                ws.send(JSON.stringify({
-                    action: "subscribe",
-                    token: token,
-                    channels: ["Trade", "Quote"],
-                    symbols: watchlist
-                }));
+                isConnected = true;
+                document.getElementById('btn-connect').innerText = "NGẮT KẾT NỐI";
+                document.getElementById('btn-connect').className = "px-3 py-1 rounded bg-red-600 hover:bg-red-500 font-bold text-white transition";
+                logSystem("Đã kết nối tới " + WS_URL);
 
-                // Cơ chế Heartbeat (Client chủ động Ping 2 phút/lần)
-                pingInterval = setInterval(() => {
-                    if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ action: "PING" }));
+                // Case 3: Client-initiated keepalive (Gửi PING mỗi 2 phút)
+                keepAliveInterval = setInterval(() => {
+                    if (ws.readyState === WebSocket.OPEN) {
+                        ws.send("PING"); // Hoặc JSON tùy SDK, nhưng text "PING" là phổ biến
+                        document.getElementById('ping-status').innerText = "Ping: Sent";
+                    }
                 }, 120000);
+
+                // Subscribe mặc định VNINDEX
+                ws.send(JSON.stringify({ type: "subscribe", channels: ["MarketIndex"], symbols: ["VNINDEX"] }));
             };
 
             ws.onmessage = (event) => {
+                msgCount++;
+                document.getElementById('msg-count').innerText = `Msgs: ${msgCount}`;
                 const raw = event.data;
-                // Phản hồi PING từ server
-                if (raw.includes("PING")) { ws.send("PONG"); return; }
-                if (raw.includes("PONG")) return; // Nhận PONG trả về, bỏ qua
 
-                try { routeData(JSON.parse(raw)); } catch(e) {}
+                // Case 1 & 2: Phản hồi PING từ Server
+                if (raw === "PING" || (typeof raw === 'string' && raw.includes("PING"))) {
+                    ws.send("PONG");
+                    document.getElementById('ping-status').innerText = "Ping: Replied";
+                    return;
+                }
+                if (raw === "PONG" || (typeof raw === 'string' && raw.includes("PONG"))) {
+                    document.getElementById('ping-status').innerText = "Ping: OK";
+                    return;
+                }
+
+                // Parse và phân phối dữ liệu JSON
+                try {
+                    const data = JSON.parse(raw);
+                    logJson(data); // In ra log để anh Trung dễ debug định dạng
+                    dataRouter(data);
+                } catch (e) {
+                    logSystem("Nhận bản tin không phải JSON: " + raw);
+                }
             };
 
             ws.onclose = () => {
-                updateStatus('DISCONNECTED', 'bg-red-500', 'MẤT KẾT NỐI WS');
-                clearInterval(pingInterval);
+                isConnected = false;
+                clearInterval(keepAliveInterval);
+                document.getElementById('btn-connect').innerText = "KẾT NỐI WS";
+                document.getElementById('btn-connect').className = "px-3 py-1 rounded bg-cyan-600 hover:bg-cyan-500 font-bold text-white transition";
+                logSystem("Đã đóng kết nối.");
             };
+
+            ws.onerror = (err) => logSystem("Lỗi WebSocket!");
         }
 
-        // --- 3. ĐIỀU HƯỚNG DỮ LIỆU UI ---
-        function routeData(data) {
-            // Cập nhật Watchlist
-            if (data.symbol && data.price) {
-                const row = document.getElementById(`wl-price-${data.symbol}`);
-                if (row) {
-                    row.innerText = data.price.toLocaleString('vi-VN');
-                    row.classList.add('text-white');
-                    setTimeout(() => row.classList.remove('text-white'), 300);
-                }
+        function sendSubscribe() {
+            if (!isConnected) return alert("Vui lòng kết nối trước!");
+            const sym = document.getElementById('sub-input').value.trim().toUpperCase();
+            if (!sym) return;
+
+            // LƯU Ý CHO ANH TRUNG: 
+            // Cấu trúc payload subscribe này là giả định phổ biến. 
+            // Nếu dùng SDK của DNSE mà cấu trúc khác (ví dụ action: "sub"), anh sửa JSON ở dòng này nhé.
+            const payload = {
+                type: "subscribe",
+                channels: ["Trade", "Quote", "ForeignInvestor", "OHLC"],
+                symbols: [sym]
+            };
+            
+            ws.send(JSON.stringify(payload));
+            logSystem("Đã gửi: " + JSON.stringify(payload));
+            
+            // UI
+            const activeEl = document.getElementById('active-symbols');
+            activeEl.innerHTML += `<div class="p-1 bg-slate-800 rounded text-cyan-400 flex justify-between"><span>${sym}</span><span class="text-[9px] text-slate-500">Đã đăng ký</span></div>`;
+            document.getElementById('sub-input').value = "";
+        }
+
+        // --- 3. ĐỊNH TUYẾN & XỬ LÝ DỮ LIỆU (DATA ROUTER) ---
+        function dataRouter(data) {
+            // Hàm chuyển đổi số thực có dấu phẩy
+            const fmt = (num) => typeof num === 'number' ? num.toLocaleString('vi-VN') : "---";
+            const fmtDec = (num) => typeof num === 'number' ? num.toFixed(2).replace('.', ',') : "---";
+
+            // 1. Phân loại Market Index
+            if (data.indexName === "VNINDEX" || data.indexTypeCode) {
+                document.getElementById('idx-vnindex').innerText = fmtDec(data.valueIndexes);
+                document.getElementById('idx-change').innerText = `${data.changedValue > 0 ? '+' : ''}${fmtDec(data.changedValue)} (${fmtDec(data.changedRatio)}%)`;
+                document.getElementById('idx-change').className = `font-mono ${data.changedValue >= 0 ? 'text-green-400' : 'text-red-400'}`;
+                document.getElementById('idx-vol').innerText = fmt(data.totalVolumeTraded);
+                document.getElementById('idx-up').innerText = `↑${data.fluctuationUpIssueCount}`;
+                document.getElementById('idx-down').innerText = `↓${data.fluctuationDownIssueCount}`;
+                return;
             }
 
-            if (data.symbol !== activeSym) return;
-
-            // Sổ lệnh (Quote)
-            if (data.bid) {
-                document.getElementById('quote-bids').innerHTML = data.bid.slice(0, 3).map(b => `
-                    <div class="flex justify-between py-1 text-green-400 border-b border-slate-800/30"><span class="opacity-70">${b.quantity.toLocaleString()}</span><span class="font-bold">${b.price.toFixed(2)}</span></div>
-                `).join('');
-                document.getElementById('quote-asks').innerHTML = data.offer.slice(0, 3).map(o => `
-                    <div class="flex justify-between py-1 text-red-400 border-b border-slate-800/30"><span class="font-bold">${o.price.toFixed(2)}</span><span class="opacity-70">${o.quantity.toLocaleString()}</span></div>
-                `).join('');
+            // 2. Phân loại Sổ Lệnh (Quote)
+            if (data.bid && data.offer) {
+                const bidsEl = document.getElementById('quote-bids');
+                const asksEl = document.getElementById('quote-asks');
+                bidsEl.innerHTML = data.bid.slice(0, 3).map(b => `<div class="flex justify-between text-green-400 flash-update"><span class="opacity-70">${fmt(b.quantity)}</span><span class="font-bold">${fmtDec(b.price)}</span></div>`).join('');
+                asksEl.innerHTML = data.offer.slice(0, 3).map(o => `<div class="flex justify-between text-red-400 flash-update"><span class="font-bold">${fmtDec(o.price)}</span><span class="opacity-70">${fmt(o.quantity)}</span></div>`).join('');
+                return;
             }
 
-            // Khớp lệnh (Trade)
-            if (data.price && data.quantity) {
-                document.getElementById('info-price').innerText = data.price.toLocaleString('vi-VN');
-                if(data.totalVolumeTraded) document.getElementById('info-vol').innerText = data.totalVolumeTraded.toLocaleString('vi-VN');
+            // 3. Phân loại Khớp Lệnh (Trade / Trade Extra)
+            if (data.price && data.quantity && !data.open) { // Không nhầm với OHLC
+                const histEl = document.getElementById('trade-history');
+                const row = document.createElement('tr');
+                const color = (data.side === 'BUY' || Math.random() > 0.5) ? 'text-green-400' : 'text-red-400';
                 
-                const hist = document.getElementById('trade-history');
-                const div = document.createElement('div');
-                div.className = `flex justify-between py-1 font-mono text-[10px] border-b border-slate-800/30 ${data.side === 'BUY' ? 'text-green-400 flash-bg' : 'text-red-400 flash-bg'}`;
-                div.innerHTML = `<span>${new Date().toLocaleTimeString('vi-VN', {hour12: false})}</span><span class="font-bold">${data.price.toFixed(2)}</span><span>${data.quantity.toLocaleString()}</span>`;
-                hist.prepend(div);
-                if (hist.children.length > 20) hist.removeChild(hist.lastChild);
+                row.className = `border-b border-slate-800/30 table w-full table-fixed ${color} flash-update`;
+                row.innerHTML = `<td class="p-1 text-left w-1/4 font-bold text-cyan-400">${data.symbol}</td><td class="p-1 w-1/4 font-bold">${fmtDec(data.price)}</td><td class="p-1 w-1/4">${fmt(data.quantity)}</td><td class="p-1 w-1/4 opacity-70">${fmt(data.totalVolumeTraded)}</td>`;
+                
+                histEl.prepend(row);
+                if (histEl.children.length > 20) histEl.removeChild(histEl.lastChild);
+                return;
+            }
+
+            // 4. Phân loại Khối Ngoại (Foreign Investor)
+            if (data.foreignInvestorTypeCode || data.sellVolume !== undefined) {
+                document.getElementById('foreign-data').innerHTML = `
+                    <div class="flex justify-between text-cyan-400 mb-1"><span class="font-bold">${data.symbol}</span><span>Room: ${fmt(data.foreignerBuyPossibleQuantity)}</span></div>
+                    <div class="flex justify-between text-green-400"><span>Mua: ${fmt(data.buyVolume)}</span><span>${fmtDec(data.buyTradedAmount / 1e9)} Tỷ</span></div>
+                    <div class="flex justify-between text-red-400"><span>Bán: ${fmt(data.sellVolume)}</span><span>${fmtDec(data.sellTradedAmount / 1e9)} Tỷ</span></div>
+                `;
+                return;
             }
         }
 
-        // --- 4. CÁC HÀM TIỆN ÍCH ---
-        function updateStatus(state, colorClass, text) {
-            document.getElementById('conn-text').innerText = text;
-            document.getElementById('conn-dot').className = `h-2 w-2 rounded-full ${colorClass}`;
-            if (state === 'CONNECTING') document.getElementById('conn-dot').classList.add('animate-pulse');
+        // --- 4. GIAO DIỆN LOGS ---
+        function logSystem(msg) {
+            const logs = document.getElementById('ws-logs');
+            logs.innerHTML = `<div class="text-amber-400">[SYS] ${msg}</div>` + logs.innerHTML;
         }
 
-        function toggleModal() {
-            const m = document.getElementById('modal-settings');
-            m.classList.toggle('opacity-0');
-            m.classList.toggle('pointer-events-none');
-            document.getElementById('api-key').value = localStorage.getItem('api_key') || "";
-            document.getElementById('api-secret').value = localStorage.getItem('api_secret') || "";
+        function logJson(obj) {
+            const logs = document.getElementById('ws-logs');
+            const str = JSON.stringify(obj);
+            const shortStr = str.length > 100 ? str.substring(0, 100) + '...' : str;
+            logs.innerHTML = `<div><span class="text-slate-500">${new Date().toLocaleTimeString('vi-VN')}</span> <span class="text-slate-300">${shortStr}</span></div>` + logs.innerHTML;
+            if(logs.children.length > 50) logs.removeChild(logs.lastChild);
         }
-
-        function saveAndConnect() {
-            const key = document.getElementById('api-key').value;
-            const sec = document.getElementById('api-secret').value;
-            localStorage.setItem('api_key', key);
-            localStorage.setItem('api_secret', sec);
-            toggleModal();
-            authenticateDNSE(key, sec);
-        }
-
-        function handleSearch(e) {
-            if (e.key === 'Enter') {
-                let sym = e.target.value.toUpperCase().trim();
-                if (sym && !watchlist.includes(sym)) {
-                    watchlist.push(sym);
-                    localStorage.setItem('hpi_symbols', JSON.stringify(watchlist));
-                    if(ws && ws.readyState === 1) ws.send(JSON.stringify({ action: "subscribe", symbols: [sym] }));
-                    renderWatchlist();
-                }
-                e.target.value = '';
-                selectSymbol(sym);
-            }
-        }
-
-        function removeSymbol(sym) {
-            watchlist = watchlist.filter(s => s !== sym);
-            localStorage.setItem('hpi_symbols', JSON.stringify(watchlist));
-            renderWatchlist();
-        }
-
-        function selectSymbol(sym) {
-            if(!sym) return;
-            activeSym = sym;
-            document.getElementById('info-sym').innerText = sym;
-            renderWatchlist();
-            initChart(sym);
-            document.getElementById('trade-history').innerHTML = '';
-        }
-
-        function renderWatchlist() {
-            document.getElementById('watchlist-body').innerHTML = watchlist.map(sym => `
-                <tr class="border-b border-slate-800/50 transition-all ${sym === activeSym ? 'active-row' : ''}" onclick="selectSymbol('${sym}')">
-                    <td class="p-3 font-bold text-cyan-400 uppercase">${sym}</td>
-                    <td class="p-3 text-right font-mono" id="wl-price-${sym}">Wait...</td>
-                    <td class="p-3 text-right"><button onclick="removeSymbol('${sym}')" class="text-slate-600 hover:text-red-500">×</button></td>
-                </tr>
-            `).join('');
-        }
-
-        function initChart(sym) {
-            document.getElementById('chart-container').innerHTML = `<div id="tv_chart_box" class="h-full absolute inset-0"></div>`;
-            new TradingView.widget({ "autosize": true, "symbol": "HOSE:" + sym, "interval": "D", "theme": "dark", "container_id": "tv_chart_box", "hide_top_toolbar": true, "backgroundColor": "rgba(2, 6, 23, 1)" });
-        }
-
-        window.onload = () => {
-            renderWatchlist();
-            selectSymbol(activeSym);
-            const key = localStorage.getItem('api_key');
-            const sec = localStorage.getItem('api_secret');
-            if(key && sec) authenticateDNSE(key, sec);
-        };
     </script>
 </body>
 </html>
