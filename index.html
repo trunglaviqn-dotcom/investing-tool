@@ -3,301 +3,247 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SHS Professional Terminal</title>
+    <title>Henry Pro Invest - Future Terminal</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0f172a; color: #e2e8f0; }
-        .modal { transition: opacity 0.25s ease; }
-        body.modal-active { overflow-x: hidden; overflow-y: visible !important; }
-        .red-flag-row { background-color: rgba(220, 38, 38, 0.15); border-left: 4px solid #ef4444; }
-        .active-row { background-color: rgba(59, 130, 246, 0.2); border-left: 4px solid #3b82f6; }
-        .scroll-hidden::-webkit-scrollbar { display: none; }
-        .flash-bg { animation: flash 1s ease-out; }
-        @keyframes flash { 0% { background-color: rgba(239, 68, 68, 0.8); } 100% { background-color: transparent; } }
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #020617; color: #f1f5f9; overflow-x: hidden; }
+        .glass-panel { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(16px); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 16px; }
+        .neon-text { background: linear-gradient(90deg, #22d3ee 0%, #3b82f6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .neon-border:focus { box-shadow: 0 0 20px rgba(34, 211, 238, 0.4); border-color: #22d3ee; }
+        .scroll-hidden::-webkit-scrollbar { width: 3px; }
+        .scroll-hidden::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 10px; }
+        .active-row { background: rgba(59, 130, 246, 0.2); border-left: 4px solid #22d3ee; }
+        .flash-buy { animation: flashBuy 0.4s ease-out; }
+        .flash-sell { animation: flashSell 0.4s ease-out; }
+        @keyframes flashBuy { 0% { background: rgba(34, 197, 94, 0.4); } 100% { background: transparent; } }
+        @keyframes flashSell { 0% { background: rgba(239, 68, 68, 0.4); } 100% { background: transparent; } }
     </style>
 </head>
-<body class="min-h-screen flex flex-col">
+<body class="h-screen flex flex-col p-3 gap-3">
 
-    <nav class="bg-slate-900 border-b border-slate-800 px-6 py-3 flex justify-between items-center sticky top-0 z-50">
-        <div class="flex items-center space-x-4">
-            <span class="text-blue-500 font-black text-2xl tracking-tighter">SHS TERMINAL</span>
-            <div class="h-6 w-px bg-slate-700"></div>
-            <span class="text-xs text-slate-400 uppercase tracking-widest">Real-time AI Forecast</span>
+    <nav class="glass-panel px-6 py-4 flex justify-between items-center shrink-0 border-cyan-500/30">
+        <div class="flex items-center space-x-8">
+            <span class="text-3xl font-black neon-text tracking-tighter uppercase">HENRY PRO INVEST</span>
+            
+            <div class="relative group">
+                <input type="text" id="search-input" placeholder="Tìm mã & Thêm Watchlist..." 
+                    class="bg-slate-950 border border-slate-800 text-cyan-100 placeholder-slate-600 text-sm rounded-xl pl-5 pr-12 py-2 focus:outline-none w-72 transition-all neon-border" 
+                    onkeypress="handleSearch(event)">
+                <div class="absolute right-4 top-2.5 text-slate-600 text-[10px] font-bold">ENTER</div>
+            </div>
         </div>
         
-        <div class="flex items-center space-x-6">
-            <div id="connection-status" class="flex items-center space-x-2 text-xs text-red-500 font-bold">
-                <span class="relative flex h-2 w-2">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-                </span>
-                <span id="conn-text">DNSE DISCONNECTED</span>
-            </div>
-            <button onclick="toggleModal()" class="p-2 hover:bg-slate-800 rounded-lg transition-colors border border-slate-700">
-                <svg class="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-            </button>
+        <div id="connection-status" class="flex items-center space-x-3 text-xs text-cyan-400 font-bold bg-cyan-950/30 px-4 py-2 rounded-full border border-cyan-500/20">
+            <span class="relative flex h-2 w-2">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-cyan-500 shadow-[0_0_10px_#22d3ee]"></span>
+            </span>
+            <span>DNSE LIGHTSPEED ACTIVE</span>
         </div>
     </nav>
 
-    <main class="p-6 grid grid-cols-12 gap-6 flex-1">
+    <main class="grid grid-cols-12 gap-3 flex-1 min-h-0">
         
-        <section class="col-span-12 lg:col-span-5 space-y-6">
-            <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-xl">
-                <div class="p-4 border-b border-slate-800 bg-slate-800/50">
-                    <h3 class="font-bold text-slate-300 text-sm">REAL-TIME WATCHLIST (Click để xem dự báo)</h3>
+        <section class="col-span-3 flex flex-col gap-3">
+            <div class="glass-panel flex flex-col h-3/5 overflow-hidden">
+                <div class="p-4 border-b border-slate-800/50 flex justify-between items-center bg-slate-900/50">
+                    <h3 class="font-bold text-xs text-slate-400 uppercase tracking-widest">Danh mục theo dõi</h3>
                 </div>
-                <table class="w-full text-left text-sm cursor-pointer">
-                    <thead class="bg-slate-900 text-slate-500 text-xs uppercase">
-                        <tr>
-                            <th class="p-4">Mã</th>
-                            <th class="p-4">Giá</th>
-                            <th class="p-4">RSI</th>
-                            <th class="p-4">Tín hiệu</th>
-                        </tr>
-                    </thead>
-                    <tbody id="watchlist-body">
-                        <tr class="border-b border-slate-800 hover:bg-slate-800 transition active-row" onclick="selectSymbol('HUT', this)">
-                            <td class="p-4 font-bold text-blue-400 text-lg">HUT</td>
-                            <td id="price-HUT" class="p-4 font-mono font-bold text-green-400">17,00</td>
-                            <td id="rsi-HUT" class="p-4 text-yellow-400">58,2</td>
-                            <td class="p-4 text-slate-400">Pha C (Test)</td>
-                        </tr>
-                        <tr class="border-b border-slate-800 hover:bg-slate-800 transition" onclick="selectSymbol('STB', this)">
-                            <td class="p-4 font-bold text-blue-400 text-lg">STB</td>
-                            <td id="price-STB" class="p-4 font-mono font-bold text-green-400">31,50</td>
-                            <td id="rsi-STB" class="p-4 text-red-400">72,5</td>
-                            <td class="p-4 text-slate-400">Pha E (Markup)</td>
-                        </tr>
-                        <tr class="border-b border-slate-800 hover:bg-slate-800 transition" onclick="selectSymbol('VIX', this)">
-                            <td class="p-4 font-bold text-blue-400 text-lg">VIX</td>
-                            <td id="price-VIX" class="p-4 font-mono font-bold text-red-400">18,10</td>
-                            <td id="rsi-VIX" class="p-4 text-green-400">28,4</td>
-                            <td class="p-4 text-slate-400">Pha B (Đi ngang)</td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div class="overflow-y-auto scroll-hidden flex-1">
+                    <table class="w-full text-xs text-left">
+                        <tbody id="watchlist-body" class="cursor-pointer"></tbody>
+                    </table>
+                </div>
             </div>
 
-            <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-xl">
-                <div class="p-4 border-b border-slate-800 bg-slate-800/50 flex justify-between items-center">
-                    <h3 class="font-bold text-red-500 text-sm flex items-center">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                        RED FLAGS (CFO/LỢI NHUẬN)
-                    </h3>
+            <div class="glass-panel p-5 flex-1 flex flex-col justify-between border-blue-500/20">
+                <div>
+                    <h2 class="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em] mb-4">Phân tích AI: <span id="current-symbol" class="text-white text-lg ml-2">---</span></h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-1">
+                            <span class="text-[10px] text-slate-500 block">TARGET T+</span>
+                            <span id="fc-ngan" class="text-lg font-bold text-cyan-400">---</span>
+                        </div>
+                        <div class="space-y-1 text-right">
+                            <span class="text-[10px] text-slate-500 block">STOP LOSS</span>
+                            <span id="sl-ngan" class="text-lg font-bold text-red-500">---</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="p-4 text-sm">
-                    <div class="flex justify-between items-center border-b border-slate-800 py-2">
-                        <span class="font-bold">HUT</span>
-                        <span class="text-green-400">CFO 1,12x (An toàn)</span>
-                    </div>
-                    <div class="flex justify-between items-center border-b border-slate-800 py-2">
-                        <span class="font-bold">STB</span>
-                        <span class="text-green-400">NPL Bao phủ 120%</span>
-                    </div>
-                    <div class="flex justify-between items-center py-2 red-flag-row px-2 rounded mt-2">
-                        <span class="font-bold">Mã Rác X</span>
-                        <span class="text-red-400 font-bold">CFO Âm - Nguy cơ thanh khoản!</span>
-                    </div>
+                <div class="mt-4 p-3 bg-slate-950/50 rounded-xl border border-slate-800 text-[11px] leading-relaxed text-slate-400 italic">
+                    <span class="text-blue-400 font-bold not-italic block mb-1">LUẬN ĐIỂM CHIẾN LƯỢC</span>
+                    <span id="fc-lydo">Chọn một mã để xem kịch bản...</span>
                 </div>
             </div>
         </section>
 
-        <section class="col-span-12 lg:col-span-7 space-y-6 flex flex-col">
-            
-            <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-xl">
-                <div class="flex items-center justify-between mb-6">
-                    <h2 class="text-xl font-black text-blue-500 uppercase tracking-wide">DỰ BÁO KẾT HỢP KẾ HOẠCH GIAO DỊCH</h2>
-                    <span id="current-symbol" class="bg-blue-600 text-white px-3 py-1 rounded text-lg font-bold">HUT</span>
-                </div>
+        <section class="col-span-6 flex flex-col gap-3">
+            <div class="glass-panel h-2/3 overflow-hidden relative" id="chart-container"></div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="bg-slate-800/50 p-4 rounded-lg border border-slate-700">
-                        <h4 class="text-xs text-slate-400 uppercase font-bold mb-2">Ngắn hạn (T+ -> 2 Tuần)</h4>
-                        <div class="flex justify-between items-end mb-2">
-                            <span class="text-sm text-slate-400">Mục tiêu:</span>
-                            <span id="fc-ngan" class="text-xl font-bold text-green-400">18,50</span>
-                        </div>
-                        <div class="flex justify-between items-end border-t border-slate-700 pt-2">
-                            <span class="text-sm font-bold text-red-500">Cắt lỗ:</span>
-                            <span id="sl-ngan" class="text-lg font-bold text-red-400">16,20</span>
-                        </div>
-                    </div>
-
-                    <div class="bg-slate-800/50 p-4 rounded-lg border border-slate-700">
-                        <h4 class="text-xs text-slate-400 uppercase font-bold mb-2">Trung hạn (1 - 3 Tháng)</h4>
-                        <div class="flex justify-between items-end mb-2">
-                            <span class="text-sm text-slate-400">Mục tiêu:</span>
-                            <span id="fc-trung" class="text-xl font-bold text-green-400">22,00</span>
-                        </div>
-                        <div class="flex justify-between items-end border-t border-slate-700 pt-2">
-                            <span class="text-sm font-bold text-red-500">Cắt lỗ:</span>
-                            <span id="sl-trung" class="text-lg font-bold text-red-400">15,50</span>
-                        </div>
-                    </div>
-
-                    <div class="bg-slate-800/50 p-4 rounded-lg border border-slate-700">
-                        <h4 class="text-xs text-slate-400 uppercase font-bold mb-2">Dài hạn (6 - 12 Tháng)</h4>
-                        <div class="flex justify-between items-end mb-2">
-                            <span class="text-sm text-slate-400">Mục tiêu:</span>
-                            <span id="fc-dai" class="text-xl font-bold text-green-400">28,50</span>
-                        </div>
-                        <div class="flex justify-between items-end border-t border-slate-700 pt-2">
-                            <span class="text-sm font-bold text-red-500">Cắt lỗ:</span>
-                            <span id="sl-dai" class="text-lg font-bold text-red-400">14,00</span>
-                        </div>
+            <div class="grid grid-cols-2 gap-3 h-1/3">
+                <div class="glass-panel flex flex-col overflow-hidden">
+                    <div class="p-2 text-center text-[10px] font-bold text-slate-500 border-b border-slate-800/50">SỔ LỆNH THỜI GIAN THỰC</div>
+                    <div class="flex-1 grid grid-cols-2 text-[11px] font-mono">
+                        <div id="order-bids" class="border-r border-slate-800/50"></div>
+                        <div id="order-asks"></div>
                     </div>
                 </div>
-                
-                <div class="mt-4 p-4 bg-slate-950 rounded border border-slate-800">
-                    <span class="text-xs text-slate-500 uppercase font-bold block mb-1">Luận điểm Xúc tác (Catalyst)</span>
-                    <p id="fc-lydo" class="text-sm text-blue-300 italic">Hưởng lợi nâng hạng FTSE & VETC, dòng tiền CFO ổn định.</p>
+                <div class="glass-panel flex flex-col overflow-hidden">
+                    <div class="p-2 text-center text-[10px] font-bold text-slate-500 border-b border-slate-800/50">KHỚP LỆNH LIÊN TỤC</div>
+                    <div class="flex-1 overflow-y-auto scroll-hidden px-2 py-1" id="trade-history"></div>
                 </div>
             </div>
+        </section>
 
-            <div class="bg-slate-900 border border-slate-800 rounded-xl flex-1 flex flex-col shadow-xl overflow-hidden">
-                <div class="p-4 border-b border-slate-800 bg-slate-800/50 flex justify-between items-center">
-                    <h3 class="font-bold text-amber-500 text-sm flex items-center">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                        SMART MONEY ALERT FEED
+        <section class="col-span-3 flex flex-col">
+            <div class="glass-panel flex-1 flex flex-col overflow-hidden border-purple-500/20">
+                <div class="p-4 border-b border-slate-800/50 bg-slate-900/50">
+                    <h3 class="text-xs font-bold text-purple-400 uppercase tracking-widest flex items-center">
+                        <span class="w-1.5 h-1.5 bg-purple-500 rounded-full mr-2 shadow-[0_0_8px_#a855f7]"></span>
+                        Smart Money Feed
                     </h3>
                 </div>
-                <div id="alert-feed" class="p-4 space-y-3 overflow-y-auto max-h-64 scroll-hidden text-sm flex-1">
-                    <div class="bg-slate-800/50 p-3 rounded border-l-4 border-blue-500 flex justify-between">
-                        <span class="text-slate-300">Hệ thống sẵn sàng. Chờ luồng dữ liệu...</span>
-                        <span class="text-slate-500 text-xs">Now</span>
-                    </div>
-                </div>
+                <div id="alert-feed" class="p-4 space-y-3 overflow-y-auto scroll-hidden flex-1 text-[11px]"></div>
             </div>
-
         </section>
     </main>
 
-    <div id="modal-settings" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-[100]">
-        <div class="modal-overlay absolute w-full h-full bg-slate-950 opacity-90"></div>
-        <div class="bg-slate-900 w-11/12 md:max-w-md mx-auto rounded-xl shadow-2xl z-50 border border-slate-700">
-            <div class="py-4 px-6 border-b border-slate-800 flex justify-between items-center">
-                <p class="text-lg font-bold text-blue-500">KẾT NỐI API DNSE</p>
-                <button onclick="toggleModal()" class="text-slate-500 hover:text-white">&times;</button>
-            </div>
-            <div class="p-6 space-y-4">
-                <input type="password" id="api-key" placeholder="DNSE Client ID" class="w-full bg-slate-950 border border-slate-800 p-3 rounded focus:border-blue-500 text-sm">
-                <input type="password" id="api-secret" placeholder="DNSE Client Secret" class="w-full bg-slate-950 border border-slate-800 p-3 rounded focus:border-blue-500 text-sm">
-                <button onclick="saveSettings()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded transition-all">LƯU CẤU HÌNH & KẾT NỐI</button>
-            </div>
-        </div>
-    </div>
-
     <script>
-        // 1. DATA DỰ BÁO (Dễ dàng chỉnh sửa tại đây, sử dụng dấu phẩy cho số thập phân)
-        const FORECAST_DATA = {
-            "HUT": {
-                nganHan: "18,50", stopNgan: "16,20",
-                trungHan: "22,00", stopTrung: "15,50",
-                daiHan: "28,50", stopDai: "14,00",
-                lyDoDaiHan: "Hưởng lợi nâng hạng FTSE & VETC, dòng tiền CFO ổn định."
-            },
-            "STB": {
-                nganHan: "33,50", stopNgan: "31,00",
-                trungHan: "36,80", stopTrung: "28,50",
-                daiHan: "42,00", stopDai: "26,00",
-                lyDoDaiHan: "LNST 2026 điều chỉnh thận trọng quanh mức 8100 tỷ, tỷ lệ bao phủ nợ xấu tốt."
-            },
-            "VIX": {
-                nganHan: "19,20", stopNgan: "17,50",
-                trungHan: "21,50", stopTrung: "16,00",
-                daiHan: "26,00", stopDai: "14,50",
-                lyDoDaiHan: "Sóng thanh khoản thị trường đón vốn ngoại."
-            }
+        // 1. LOCALSTORAGE & DEFAULT DATA
+        const DEFAULT_LIST = [
+            { symbol: "HUT", price: 17.00, isCrypto: false },
+            { symbol: "STB", price: 31.50, isCrypto: false },
+            { symbol: "BTCUSD", price: 65400.00, isCrypto: true }
+        ];
+
+        const FORECAST_DB = {
+            "HUT": { ngan: "18,50", sl: "16,20", lydo: "Hưởng lợi nâng hạng FTSE & VETC, dòng tiền CFO ổn định." },
+            "STB": { ngan: "33,50", sl: "31,00", lydo: "LNST 2026 dự kiến 8100 tỷ, nợ xấu được xử lý tốt." },
+            "BTCUSD": { ngan: "68.000,00", sl: "61.000,00", lydo: "Chu kỳ halving và dòng vốn ETF mạnh mẽ." }
         };
 
-        let currentSymbol = "HUT";
+        let watchlist = JSON.parse(localStorage.getItem('henry_watchlist')) || DEFAULT_LIST;
+        let activeSymbol = watchlist[0].symbol;
 
-        // 2. UI LOGIC & TƯƠNG TÁC
-        function toggleModal() {
-            const modal = document.getElementById('modal-settings');
-            modal.classList.toggle('opacity-0');
-            modal.classList.toggle('pointer-events-none');
-            if(!modal.classList.contains('opacity-0')){
-                document.getElementById('api-key').value = localStorage.getItem('dnse_api_key') || '';
-                document.getElementById('api-secret').value = localStorage.getItem('dnse_api_secret') || '';
+        // 2. SEARCH & WATCHLIST LOGIC
+        function saveList() { localStorage.setItem('henry_watchlist', JSON.stringify(watchlist)); }
+
+        function handleSearch(e) {
+            if (e.key === 'Enter') {
+                const sym = e.target.value.toUpperCase();
+                if (sym && !watchlist.find(i => i.symbol === sym)) {
+                    watchlist.push({ symbol: sym, price: 0, isCrypto: sym.includes('USD') });
+                    saveList();
+                    renderWatchlist();
+                    selectSymbol(sym);
+                }
+                e.target.value = '';
             }
         }
 
-        function saveSettings() {
-            localStorage.setItem('dnse_api_key', document.getElementById('api-key').value);
-            localStorage.setItem('dnse_api_secret', document.getElementById('api-secret').value);
-            toggleModal();
-            connectAPI();
+        function removeSymbol(sym) {
+            watchlist = watchlist.filter(i => i.symbol !== sym);
+            saveList();
+            renderWatchlist();
+            if(activeSymbol === sym) selectSymbol(watchlist[0]?.symbol || '');
         }
 
-        function selectSymbol(symbol, element) {
-            currentSymbol = symbol;
-            
-            // Xử lý Active Row
-            document.querySelectorAll('#watchlist-body tr').forEach(row => row.classList.remove('active-row'));
-            element.classList.add('active-row');
-            
-            // Cập nhật UI Dự báo
-            document.getElementById('current-symbol').innerText = symbol;
-            const data = FORECAST_DATA[symbol];
-            
-            document.getElementById('fc-ngan').innerText = data.nganHan;
-            document.getElementById('sl-ngan').innerText = data.stopNgan;
-            document.getElementById('fc-trung').innerText = data.trungHan;
-            document.getElementById('sl-trung').innerText = data.stopTrung;
-            document.getElementById('fc-dai').innerText = data.daiHan;
-            document.getElementById('sl-dai').innerText = data.stopDai;
-            document.getElementById('fc-lydo').innerText = data.lyDoDaiHan;
+        function renderWatchlist() {
+            const container = document.getElementById('watchlist-body');
+            container.innerHTML = watchlist.map(item => `
+                <tr class="border-b border-slate-800/40 hover:bg-slate-800/30 transition-all ${item.symbol === activeSymbol ? 'active-row' : ''}">
+                    <td class="p-4 font-bold text-cyan-400" onclick="selectSymbol('${item.symbol}')">${item.symbol}</td>
+                    <td class="p-4 text-right font-mono font-bold text-green-400" id="list-price-${item.symbol}">---</td>
+                    <td class="p-4 text-right"><button onclick="removeSymbol('${item.symbol}')" class="text-slate-600 hover:text-red-500">×</button></td>
+                </tr>
+            `).join('');
         }
 
-        function addAlert(message, type = 'normal') {
-            const feed = document.getElementById('alert-feed');
-            const time = new Date().toLocaleTimeString('vi-VN');
-            let cssClass = "bg-slate-800/50 border-l-4 border-blue-500 text-slate-300";
+        // 3. CORE TERMINAL UI
+        function selectSymbol(sym) {
+            if(!sym) return;
+            activeSymbol = sym;
+            document.getElementById('current-symbol').innerText = sym;
             
-            if(type === 'danger') cssClass = "bg-red-900/50 border-l-4 border-red-500 text-red-300 font-bold flash-bg";
-            if(type === 'success') cssClass = "bg-green-900/50 border-l-4 border-green-500 text-green-300 font-bold flash-bg";
+            const data = FORECAST_DB[sym] || { ngan: "---", sl: "---", lydo: "Chưa có dữ liệu phân tích AI cho mã này." };
+            document.getElementById('fc-ngan').innerText = data.ngan;
+            document.getElementById('sl-ngan').innerText = data.sl;
+            document.getElementById('fc-lydo').innerText = data.lydo;
 
-            const item = document.createElement('div');
-            item.className = `p-3 rounded flex justify-between items-center mb-2 shadow ${cssClass}`;
-            item.innerHTML = `<span>${message}</span> <span class="text-xs opacity-70">${time}</span>`;
-            
-            feed.prepend(item);
-            if (feed.children.length > 20) feed.removeChild(feed.lastChild);
+            renderWatchlist();
+            initChart(sym);
         }
 
-        // 3. MÔ PHỎNG LUỒNG DỮ LIỆU THỜI GIAN THỰC (DNSE API)
-        let dataInterval;
-        function connectAPI() {
-            if(!localStorage.getItem('dnse_api_key')) return;
-            
-            const statusEl = document.getElementById('connection-status');
-            statusEl.classList.replace('text-red-500', 'text-green-500');
-            document.getElementById('conn-text').innerText = 'DNSE CONNECTED';
-            statusEl.querySelector('.bg-red-500').className = 'relative inline-flex rounded-full h-2 w-2 bg-green-500';
-            statusEl.querySelector('.bg-red-400').className = 'animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75';
-
-            clearInterval(dataInterval);
-            
-            // Lặp mô phỏng giá chạy 2 giây/lần
-            dataInterval = setInterval(() => {
-                const hutPrice = (17 + Math.random() * 0.5).toFixed(2).replace('.', ',');
-                document.getElementById('price-HUT').innerText = hutPrice;
-            }, 2000);
-
-            // Mô phỏng "Cá mập" quét lệnh mỗi 12 giây
-            setInterval(() => {
-                const volume = Math.floor(150000 + Math.random() * 100000);
-                addAlert(`🔥 LỆNH MUA CHỦ ĐỘNG KHỦNG: HUT khớp ${volume.toLocaleString('vi-VN')} cổ!`, 'success');
-            }, 12000);
-            
-            addAlert('Đã kết nối luồng Websocket thành công.');
+        function initChart(sym) {
+            document.getElementById('chart-container').innerHTML = `<div id="tv_chart_box" class="h-full"></div>`;
+            new TradingView.widget({
+                "autosize": true, "symbol": (sym.includes('USD') ? "BINANCE:" : "HOSE:") + sym,
+                "interval": "D", "theme": "dark", "style": "1", "locale": "vi_VN",
+                "container_id": "tv_chart_box", "backgroundColor": "rgba(2, 6, 23, 1)", "hide_top_toolbar": true
+            });
         }
 
-        // Khởi động
+        // 4. DATA SIMULATION (Lấy từ DNSE LightSpeed giả lập)
+        function simulateData() {
+            watchlist.forEach(item => {
+                const el = document.getElementById(`list-price-${item.symbol}`);
+                if(!el) return;
+                
+                // Giả lập giá nhảy
+                let newPrice = item.price > 0 ? item.price + (Math.random() * 0.2 - 0.1) : (Math.random() * 50 + 10);
+                item.price = newPrice;
+                el.innerText = item.isCrypto ? newPrice.toLocaleString('vi-VN') : newPrice.toFixed(2).replace('.', ',');
+                
+                if(item.symbol === activeSymbol) updateOrderBook(newPrice, item.isCrypto);
+            });
+        }
+
+        function updateOrderBook(price, isCrypto) {
+            const step = isCrypto ? 20 : 0.05;
+            const bids = document.getElementById('order-bids');
+            const asks = document.getElementById('order-asks');
+            
+            bids.innerHTML = Array.from({length:6}, (_, i) => `
+                <div class="flex justify-between p-1.5 px-3 text-green-400">
+                    <span class="opacity-40">${Math.floor(Math.random()*900)}</span>
+                    <span class="font-bold">${(price - step*(i+1)).toFixed(2).replace('.',',')}</span>
+                </div>
+            `).join('');
+
+            asks.innerHTML = Array.from({length:6}, (_, i) => `
+                <div class="flex justify-between p-1.5 px-3 text-red-400">
+                    <span class="font-bold">${(price + step*(i+1)).toFixed(2).replace('.',',')}</span>
+                    <span class="opacity-40">${Math.floor(Math.random()*900)}</span>
+                </div>
+            `).join('');
+        }
+
+        function addTrade() {
+            const container = document.getElementById('trade-history');
+            const isBuy = Math.random() > 0.4;
+            const vol = Math.floor(Math.random() * 500) * 10;
+            const div = document.createElement('div');
+            div.className = `flex justify-between py-1 border-b border-slate-800/30 ${isBuy ? 'flash-buy text-green-400' : 'flash-sell text-red-400'}`;
+            div.innerHTML = `<span>${new Date().toLocaleTimeString('vi-VN')}</span> <span class="font-bold">${vol.toLocaleString('vi-VN')}</span>`;
+            container.prepend(div);
+            if(container.children.length > 20) container.removeChild(container.lastChild);
+
+            if(vol > 4000) {
+                const feed = document.getElementById('alert-feed');
+                const alert = document.createElement('div');
+                alert.className = `p-3 rounded-lg border-l-2 mb-2 ${isBuy ? 'bg-cyan-900/20 border-cyan-500 text-cyan-200' : 'bg-red-900/20 border-red-500 text-red-200'}`;
+                alert.innerHTML = `<span class="font-black">🔥 BIG ORDER:</span> ${activeSymbol} khớp chủ động ${vol.toLocaleString('vi-VN')} CP`;
+                feed.prepend(alert);
+                if(feed.children.length > 10) feed.removeChild(feed.lastChild);
+            }
+        }
+
         window.onload = () => {
-            selectSymbol('HUT', document.querySelector('#watchlist-body tr'));
-            if(localStorage.getItem('dnse_api_key')) connectAPI();
+            renderWatchlist();
+            selectSymbol(activeSymbol);
+            setInterval(simulateData, 2000);
+            setInterval(addTrade, 1000);
         };
     </script>
 </body>
