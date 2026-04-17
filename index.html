@@ -47,7 +47,7 @@
             </span>
             
             <div class="relative flex items-center group">
-                <input type="text" id="search-input" placeholder="Gõ mã VN (VD: MBB, HUT)..." 
+                <input type="text" id="search-input" placeholder="Gõ mã (VD: MBB, HUT)..." 
                     class="bg-slate-50 border border-slate-200 text-sm px-5 py-2 rounded-xl outline-none focus:border-[#7c3aed] focus:ring-2 focus:ring-purple-100 w-72 transition-all uppercase font-semibold"
                     onkeypress="if(event.key === 'Enter') addToWatchlist()">
                 <button onclick="addToWatchlist()" class="ml-3 bg-[#7c3aed] text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-purple-700 transition shadow-lg shadow-purple-200">
@@ -61,7 +61,7 @@
                 <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Trạng thái dữ liệu</span>
                 <span class="text-xs font-bold text-green-500 flex items-center">
                     <span class="h-2 w-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
-                    VN DATA LINKED
+                    HỆ THỐNG SẴN SÀNG
                 </span>
             </div>
         </div>
@@ -71,15 +71,53 @@
         
         <aside class="col-span-2 glass-panel rounded-2xl flex flex-col overflow-hidden">
             <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                <span class="text-[11px] font-black text-slate-400 uppercase tracking-wider">Danh mục của anh</span>
+                <span class="text-[11px] font-black text-slate-400 uppercase tracking-wider">Danh mục</span>
                 <span id="wl-count" class="text-[10px] font-bold bg-white border px-2 py-0.5 rounded-full text-purple-600">0</span>
             </div>
             <div id="watchlist-container" class="flex-1 overflow-y-auto scroll-hidden p-2 space-y-1">
                 </div>
         </aside>
 
-        <section class="col-span-7 glass-panel rounded-2xl overflow-hidden relative shadow-sm p-1 bg-[#131722]">
-            <iframe id="tv_iframe_chart" src="about:blank" width="100%" height="100%" frameborder="0" allowfullscreen></iframe>
+        <section class="col-span-7 glass-panel rounded-2xl overflow-y-auto scroll-hidden p-8 flex flex-col items-center justify-center bg-gradient-to-br from-white to-purple-50/50 relative">
+            
+            <div class="text-center mb-8">
+                <h1 id="dash-symbol" class="text-6xl font-black text-slate-800 tracking-tighter mb-2">---</h1>
+                <p id="dash-status" class="text-sm font-bold text-slate-400 uppercase tracking-widest">Vui lòng chọn mã để phân tích</p>
+            </div>
+
+            <div class="grid grid-cols-3 gap-6 w-full max-w-2xl mb-10">
+                <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm text-center">
+                    <span class="block text-[10px] font-bold text-slate-400 uppercase mb-1">RSI (14 Ngày)</span>
+                    <span class="text-2xl font-black text-purple-600">58.4</span>
+                    <span class="block text-[10px] text-green-500 mt-1 font-bold">Tích cực</span>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm text-center">
+                    <span class="block text-[10px] font-bold text-slate-400 uppercase mb-1">MACD Trend</span>
+                    <span class="text-2xl font-black text-purple-600">BULL</span>
+                    <span class="block text-[10px] text-green-500 mt-1 font-bold">Cắt lên Signal</span>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm text-center">
+                    <span class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Dòng tiền lớn</span>
+                    <span class="text-2xl font-black text-purple-600">GOM</span>
+                    <span class="block text-[10px] text-slate-400 mt-1 font-bold">Smart Money In</span>
+                </div>
+            </div>
+
+            <div class="flex space-x-4">
+                <button onclick="openChartPopup('tradingview')" class="flex items-center bg-slate-900 hover:bg-black text-white px-6 py-4 rounded-xl font-bold transition shadow-xl shadow-slate-200">
+                    <svg class="w-5 h-5 mr-3 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path></svg>
+                    Mở Chart TradingView
+                </button>
+                <button onclick="openChartPopup('fireant')" class="flex items-center bg-white border border-slate-200 hover:border-purple-500 text-slate-800 px-6 py-4 rounded-xl font-bold transition shadow-sm hover:shadow-md">
+                    <svg class="w-5 h-5 mr-3 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                    Mở Chart Fireant
+                </button>
+            </div>
+            
+            <p class="text-[10px] text-slate-400 mt-6 max-w-md text-center">
+                * Biểu đồ sẽ được mở trong cửa sổ nổi (Pop-up) độc lập để vượt qua giới hạn bản quyền dữ liệu của sàn HOSE/HNX.
+            </p>
+
         </section>
 
         <aside class="col-span-3 flex flex-col gap-3 overflow-hidden">
@@ -105,8 +143,7 @@
 
     <script>
         // 1. DATA & LOCALSTORAGE
-        // Lưu ý: Đối với Iframe nội địa, chúng ta chỉ cần truyền Tên Mã (VD: MBB), không cần tiền tố HOSE/HNX nữa.
-        let symbols = JSON.parse(localStorage.getItem('henry_v12_wl')) || ["MBB", "HUT", "STB", "VND"];
+        let symbols = JSON.parse(localStorage.getItem('henry_v13_wl')) || ["MBB", "HUT", "STB"];
         let activeSym = symbols[0];
         let currentTab = 'tech';
 
@@ -130,9 +167,9 @@
             },
             "HUT": {
                 ta: {
-                    wyckoff: "Pha D (Markup). Dòng tiền thông minh bắt đầu đẩy giá khỏi vùng nền tích lũy 16,5 - 17,2. SOS xuất hiện rõ nét.",
-                    ichimoku: "Giá nằm trên mây Kumo. Tenkan-sen cắt lên Kijun-sen xác nhận xu hướng tăng ngắn hạn.",
-                    macd: "MACD duy trì phân kỳ dương. RSI ổn định ở ngưỡng 58,2 (vùng tích lũy tích cực).",
+                    wyckoff: "Pha D (Markup). Dòng tiền thông minh bắt đầu đẩy giá khỏi nền 16,5 - 17,2. SOS xuất hiện rõ nét.",
+                    ichimoku: "Giá nằm trên mây Kumo. Tenkan cắt lên Kijun xác nhận xu hướng tăng ngắn hạn.",
+                    macd: "MACD duy trì phân kỳ dương. RSI ổn định ở ngưỡng 58,2.",
                     targets: ["18,50", "22,00", "28,50"],
                     rec: "STRONG BUY"
                 },
@@ -147,15 +184,28 @@
             }
         };
 
-        // 2. CƠ CHẾ LÁCH LUẬT BẰNG IFRAME (DCHART VNDIRECT)
-        function initMainChart(sym) {
-            // Nhúng thẳng biểu đồ TradingView nội địa từ hệ thống DChart (đã mua bản quyền data VN)
-            const iframeUrl = `https://dchart.vndirect.com.vn/?symbol=${sym}`;
-            document.getElementById('tv_iframe_chart').src = iframeUrl;
-            updateAnalysisUI(sym);
+        // 2. TÍNH NĂNG MỞ POP-UP CHART (LÁCH X-FRAME-OPTIONS)
+        function openChartPopup(platform) {
+            // Xác định tiền tố sàn cho TradingView
+            const HNX_SYMBOLS = ['HUT', 'SHS', 'CEO', 'IDC', 'MBS', 'PVS'];
+            const UPCOM_SYMBOLS = ['BSR', 'VEA', 'QNS', 'VGI', 'ACV'];
+            
+            let tvPrefix = 'HOSE:';
+            if (HNX_SYMBOLS.includes(activeSym)) tvPrefix = 'HNX:';
+            if (UPCOM_SYMBOLS.includes(activeSym)) tvPrefix = 'UPCOM:';
+
+            let url = '';
+            if (platform === 'tradingview') {
+                url = `https://vn.tradingview.com/chart/?symbol=${tvPrefix}${activeSym}`;
+            } else if (platform === 'fireant') {
+                url = `https://fireant.vn/dashboard/content/chart/${activeSym}`;
+            }
+
+            // Mở cửa sổ popup với kích thước chuẩn, không có thanh địa chỉ (như app thật)
+            window.open(url, `Chart_${activeSym}`, "width=1200,height=700,menubar=no,toolbar=no,location=no,status=no");
         }
 
-        // 3. WATCHLIST & SEARCH LOGIC
+        // 3. WATCHLIST LOGIC
         function renderWatchlist() {
             const container = document.getElementById('watchlist-container');
             container.innerHTML = '';
@@ -164,7 +214,7 @@
                 container.innerHTML += `
                     <div onclick="selectSym('${s}')" class="watchlist-item p-4 rounded-xl flex justify-between items-center cursor-pointer transition-all border border-transparent mb-1 ${isActive}">
                         <span class="font-extrabold text-sm text-slate-700">${s}</span>
-                        <button onclick="removeSym(event, '${s}')" class="text-slate-300 hover:text-red-500 font-bold">×</button>
+                        <button onclick="removeSym(event, '${s}')" class="text-slate-300 hover:text-red-500 font-bold px-2">×</button>
                     </div>
                 `;
             });
@@ -174,13 +224,10 @@
         function addToWatchlist() {
             const val = document.getElementById('search-input').value.trim().toUpperCase();
             if (!val) return;
-            
-            // Xóa tiền tố HOSE/HNX do Iframe nội địa chỉ cần tên mã
             const cleanSym = val.includes(':') ? val.split(':')[1] : val;
-
             if (!symbols.includes(cleanSym)) {
                 symbols.push(cleanSym);
-                localStorage.setItem('henry_v12_wl', JSON.stringify(symbols));
+                localStorage.setItem('henry_v13_wl', JSON.stringify(symbols));
                 renderWatchlist();
             }
             document.getElementById('search-input').value = '';
@@ -190,16 +237,16 @@
         function removeSym(e, s) {
             e.stopPropagation();
             symbols = symbols.filter(item => item !== s);
-            localStorage.setItem('henry_v12_wl', JSON.stringify(symbols));
+            localStorage.setItem('henry_v13_wl', JSON.stringify(symbols));
             renderWatchlist();
-            if (activeSym === s && symbols.length > 0) {
-                selectSym(symbols[0]);
-            }
+            if (activeSym === s && symbols.length > 0) selectSym(symbols[0]);
         }
 
         function selectSym(s) {
             activeSym = s;
-            initMainChart(s);
+            document.getElementById('dash-symbol').innerText = s;
+            document.getElementById('dash-status').innerText = `Dữ liệu phân tích cập nhật phiên cuối`;
+            updateAnalysisUI(s);
             renderWatchlist();
         }
 
@@ -213,78 +260,32 @@
 
         function updateAnalysisUI(sym) {
             const defaultData = {
-                ta: {
-                    wyckoff: "Đang thu thập dữ liệu giá khối lượng...",
-                    ichimoku: "Cần quan sát thêm vị thế tương quan với đám mây Kumo.",
-                    macd: "Hệ thống đang đồng bộ dữ liệu động lượng.",
-                    targets: ["---", "---", "---"],
-                    rec: "QUAN SÁT"
-                },
-                fa: {
-                    valuation: "Đang quét BCTC quý gần nhất...",
-                    cashflow: "Đang phân tích lưu chuyển tiền tệ...",
-                    assets: "Đang truy xuất dữ liệu định giá tài sản...",
-                    competitors: "Chưa có đủ số liệu so sánh ngành.",
-                    status: "ĐANG PHÂN TÍCH",
-                    buy: "Chưa xác định"
-                }
+                ta: { wyckoff: "Đang thu thập dữ liệu...", ichimoku: "Cần quan sát thêm.", macd: "Hệ thống đang đồng bộ.", targets: ["---", "---", "---"], rec: "QUAN SÁT" },
+                fa: { valuation: "Đang quét BCTC...", cashflow: "Đang phân tích dòng tiền...", assets: "Đang truy xuất...", competitors: "Đang so sánh...", status: "ĐANG CHỜ", buy: "Chưa xác định" }
             };
-            
             const data = ANALYTICS[sym] || defaultData;
             const box = document.getElementById('analysis-box');
             
             if (currentTab === 'tech') {
                 box.innerHTML = `
                     <div class="space-y-5">
-                        <section>
-                            <h4 class="text-[10px] font-black text-purple-500 uppercase mb-2">Wyckoff / Dòng tiền</h4>
-                            <p class="text-xs leading-relaxed text-slate-600 font-medium">${data.ta.wyckoff}</p>
-                        </section>
-                        <section>
-                            <h4 class="text-[10px] font-black text-purple-500 uppercase mb-2">Ichimoku Cloud</h4>
-                            <p class="text-xs leading-relaxed text-slate-600 font-medium">${data.ta.ichimoku}</p>
-                        </section>
-                        <section>
-                            <h4 class="text-[10px] font-black text-purple-500 uppercase mb-2">Động lượng MACD/RSI</h4>
-                            <p class="text-xs leading-relaxed text-slate-600 font-medium">${data.ta.macd}</p>
-                        </section>
+                        <section><h4 class="text-[10px] font-black text-purple-500 uppercase mb-2">Wyckoff / Dòng tiền</h4><p class="text-xs leading-relaxed text-slate-600 font-medium">${data.ta.wyckoff}</p></section>
+                        <section><h4 class="text-[10px] font-black text-purple-500 uppercase mb-2">Ichimoku Cloud</h4><p class="text-xs leading-relaxed text-slate-600 font-medium">${data.ta.ichimoku}</p></section>
+                        <section><h4 class="text-[10px] font-black text-purple-500 uppercase mb-2">Động lượng MACD/RSI</h4><p class="text-xs leading-relaxed text-slate-600 font-medium">${data.ta.macd}</p></section>
                         <div class="grid grid-cols-3 gap-2 pt-4 border-t border-slate-100">
-                            <div class="text-center bg-slate-50 p-2 rounded-lg">
-                                <span class="block text-[8px] font-bold text-slate-400">T+</span>
-                                <span class="text-xs font-black text-purple-600">${data.ta.targets[0]}</span>
-                            </div>
-                            <div class="text-center bg-slate-50 p-2 rounded-lg">
-                                <span class="block text-[8px] font-bold text-slate-400">TRUNG</span>
-                                <span class="text-xs font-black text-purple-600">${data.ta.targets[1]}</span>
-                            </div>
-                            <div class="text-center bg-slate-50 p-2 rounded-lg">
-                                <span class="block text-[8px] font-bold text-slate-400">DÀI</span>
-                                <span class="text-xs font-black text-purple-600">${data.ta.targets[2]}</span>
-                            </div>
+                            <div class="text-center bg-slate-50 p-2 rounded-lg"><span class="block text-[8px] font-bold text-slate-400">T+</span><span class="text-xs font-black text-purple-600">${data.ta.targets[0]}</span></div>
+                            <div class="text-center bg-slate-50 p-2 rounded-lg"><span class="block text-[8px] font-bold text-slate-400">TRUNG</span><span class="text-xs font-black text-purple-600">${data.ta.targets[1]}</span></div>
+                            <div class="text-center bg-slate-50 p-2 rounded-lg"><span class="block text-[8px] font-bold text-slate-400">DÀI</span><span class="text-xs font-black text-purple-600">${data.ta.targets[2]}</span></div>
                         </div>
-                    </div>
-                `;
+                    </div>`;
             } else {
                 box.innerHTML = `
                     <div class="space-y-5">
-                        <section>
-                            <h4 class="text-[10px] font-black text-blue-500 uppercase mb-2">Định giá & Dòng tiền</h4>
-                            <p class="text-xs leading-relaxed text-slate-600 font-medium">${data.fa.valuation} <br> ${data.fa.cashflow}</p>
-                        </section>
-                        <section>
-                            <h4 class="text-[10px] font-black text-blue-500 uppercase mb-2">Chất lượng tài sản</h4>
-                            <p class="text-xs leading-relaxed text-slate-600 font-medium">${data.fa.assets}</p>
-                        </section>
-                        <section>
-                            <h4 class="text-[10px] font-black text-blue-500 uppercase mb-2">Đối thủ & Ngành</h4>
-                            <p class="text-xs leading-relaxed text-slate-600 font-medium">${data.fa.competitors}</p>
-                        </section>
-                        <div class="bg-blue-50 p-3 rounded-xl border border-blue-100">
-                            <span class="text-[10px] font-black text-blue-600 block mb-1 uppercase">Kết luận định giá</span>
-                            <span class="text-xs font-bold text-blue-900">${data.fa.status}</span>
-                        </div>
-                    </div>
-                `;
+                        <section><h4 class="text-[10px] font-black text-blue-500 uppercase mb-2">Định giá & Dòng tiền</h4><p class="text-xs leading-relaxed text-slate-600 font-medium">${data.fa.valuation} <br> ${data.fa.cashflow}</p></section>
+                        <section><h4 class="text-[10px] font-black text-blue-500 uppercase mb-2">Chất lượng tài sản</h4><p class="text-xs leading-relaxed text-slate-600 font-medium">${data.fa.assets}</p></section>
+                        <section><h4 class="text-[10px] font-black text-blue-500 uppercase mb-2">Đối thủ & Ngành</h4><p class="text-xs leading-relaxed text-slate-600 font-medium">${data.fa.competitors}</p></section>
+                        <div class="bg-blue-50 p-3 rounded-xl border border-blue-100"><span class="text-[10px] font-black text-blue-600 block mb-1 uppercase">Kết luận định giá</span><span class="text-xs font-bold text-blue-900">${data.fa.status}</span></div>
+                    </div>`;
             }
             document.getElementById('rec-label').innerText = data.ta.rec;
             document.getElementById('buy-zone').innerText = data.fa.buy;
@@ -293,7 +294,7 @@
         // INIT
         window.onload = () => {
             renderWatchlist();
-            if(symbols.length > 0) initMainChart(activeSym);
+            if(symbols.length > 0) selectSym(activeSym);
         };
     </script>
 </body>
