@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Henry Pro Invest V22 - Auto Discovery AI</title>
+    <title>Henry Pro Invest V23 - Smart Routing AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -31,9 +31,9 @@
         <div class="flex items-center space-x-4">
             <button onclick="toggleModal('api-modal')" class="text-[10px] font-bold border px-4 py-2 rounded-2xl hover:bg-slate-50 transition">⚙️ CONFIG API KEY</button>
             <div class="flex flex-col items-end border-l pl-5">
-                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Hệ thống AI Động</span>
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Định tuyến thông minh</span>
                 <span class="text-xs font-bold text-green-500 flex items-center">
-                    <span class="h-2 w-2 bg-green-500 rounded-full mr-2 animate-pulse"></span> AUTO DISCOVERY
+                    <span class="h-2 w-2 bg-green-500 rounded-full mr-2 animate-pulse"></span> SMART FALLBACK AI
                 </span>
             </div>
         </div>
@@ -72,13 +72,13 @@
         <aside class="col-span-4 flex flex-col gap-3 overflow-hidden">
             <div class="glass-panel rounded-3xl p-5 flex justify-between items-center border-b-4 border-purple-600">
                 <span class="text-[11px] font-black text-purple-600 uppercase">✨ Henry AI Analyst</span>
-                <button onclick="generateAI()" id="btn-ai" class="bg-purple-600 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-lg shadow-purple-200 hover:bg-purple-700 transition">RUN AI</button>
+                <button onclick="generateAI()" id="btn-ai" class="bg-purple-600 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-lg shadow-purple-200 hover:bg-purple-700 transition disabled:opacity-50">RUN AI</button>
             </div>
             
             <div class="glass-panel rounded-3xl flex-1 overflow-y-auto scroll-hidden p-6 relative">
                 <div id="ai-loading" class="hidden absolute inset-0 bg-white/90 backdrop-blur-sm flex flex-col items-center justify-center z-10">
                     <div class="h-8 w-8 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mb-3"></div>
-                    <span id="ai-status-text" class="text-[10px] font-bold text-purple-600 uppercase animate-pulse">Đang kết nối API...</span>
+                    <span id="ai-status-text" class="text-[10px] font-bold text-purple-600 uppercase animate-pulse text-center px-4">Đang kết nối API...</span>
                 </div>
                 <div id="ai-content" class="markdown-body">
                     <div class="text-center text-slate-400 text-[11px] mt-20">Vui lòng chọn mã và bấm <b>RUN AI</b>.</div>
@@ -100,7 +100,7 @@
     </div>
 
     <script>
-        let watchlist = JSON.parse(localStorage.getItem('hpi_v22_wl')) || ["HUT", "MBB", "STB"];
+        let watchlist = JSON.parse(localStorage.getItem('hpi_v23_wl')) || ["HUT", "MBB", "STB"];
         let activeSym = watchlist[0];
         let priceInterval = null;
 
@@ -128,9 +128,9 @@
             } catch(e) { console.error("Lỗi dữ liệu giá"); }
         }
 
-        // TỰ ĐỘNG DÒ TÌM MODEL VÀ PHÂN TÍCH
+        // TỰ ĐỘNG DÒ TÌM VÀ CHUYỂN KÊNH KHI BỊ NGHẼN (FALLBACK)
         async function generateAI() {
-            const key = localStorage.getItem('hpi_gemini_key_v22');
+            const key = localStorage.getItem('hpi_gemini_key_v23');
             if(!key) { 
                 toggleModal('api-modal'); 
                 return; 
@@ -139,65 +139,79 @@
             const loadingScreen = document.getElementById('ai-loading');
             const statusText = document.getElementById('ai-status-text');
             const contentBox = document.getElementById('ai-content');
+            const btnAi = document.getElementById('btn-ai');
             
+            btnAi.disabled = true;
             loadingScreen.classList.remove('hidden');
             
             try {
-                // BƯỚC 1: DÒ TÌM MODEL HỢP LỆ
-                statusText.innerText = "Đang tìm Model AI phù hợp...";
+                statusText.innerText = "Đang lấy danh sách các Model khả dụng...";
                 const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
                 const listData = await listRes.json();
                 
-                if(listData.error) {
-                    throw new Error(`Lỗi xác thực Key: ${listData.error.message}`);
-                }
+                if(listData.error) throw new Error(`Lỗi xác thực Key: ${listData.error.message}`);
 
-                // Lọc ra các model có hỗ trợ tạo nội dung (generateContent)
                 const validModels = listData.models.filter(m => 
                     m.supportedGenerationMethods && m.supportedGenerationMethods.includes("generateContent")
                 );
 
-                if(validModels.length === 0) {
-                    throw new Error("API Key của anh không được cấp quyền sử dụng bất kỳ Model nào.");
-                }
+                if(validModels.length === 0) throw new Error("API Key không có quyền sử dụng Model nào.");
 
-                // Ưu tiên chọn dòng flash 1.5 mới nhất, nếu không có thì lấy cái đầu tiên
-                let selectedModelName = validModels[0].name; 
-                const preferredModel = validModels.find(m => m.name.includes("1.5-flash"));
-                if(preferredModel) {
-                    selectedModelName = preferredModel.name;
-                }
-
-                statusText.innerText = `Đã kết nối: ${selectedModelName.replace('models/', '')}...`;
-
-                // BƯỚC 2: GỬI LỆNH PHÂN TÍCH VÀO MODEL ĐÃ TÌM ĐƯỢC
                 const stbData = activeSym === "STB" ? "Lưu ý nội bộ: LNST 2026 ước xấp xỉ 8.100 tỷ, định giá năm 2026 là xấp xỉ 70.000 VNĐ." : "";
                 const prompt = `Bạn là Chuyên gia Phân tích Tài chính. Phân tích mã ${activeSym}. ${stbData} Yêu cầu: 1. Kỹ thuật (Wyckoff/Ichimoku), 2. Cơ bản (P/E, P/B, Tài sản), 3. Vùng mua mục tiêu. Trình bày Markdown ngắn gọn, sử dụng dấu phẩy (,) cho số thập phân.`;
 
-                // Đưa tên model lấy được vào URL để fetch
-                const aiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/${selectedModelName}:generateContent?key=${key}`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ contents: [{parts: [{text: prompt}]}] })
-                });
-                
-                const aiData = await aiRes.json();
-                
-                if(aiData.error) {
-                    throw new Error(aiData.error.message);
+                let success = false;
+                let lastErrorMsg = "";
+
+                // VÒNG LẶP FALLBACK: Thử từng model, nếu lỗi "high demand" thì chuyển sang model tiếp theo
+                for(let i = 0; i < validModels.length; i++) {
+                    const modelName = validModels[i].name;
+                    statusText.innerText = `Đang thử gọi Model:\n${modelName.replace('models/', '')}`;
+                    
+                    try {
+                        const aiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/${modelName}:generateContent?key=${key}`, {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({ contents: [{parts: [{text: prompt}]}] })
+                        });
+                        
+                        const aiData = await aiRes.json();
+                        
+                        if(aiData.error) throw new Error(aiData.error.message);
+                        
+                        // Thành công!
+                        contentBox.innerHTML = marked.parse(aiData.candidates[0].content.parts[0].text);
+                        success = true;
+                        break; // Thoát vòng lặp ngay lập tức
+                        
+                    } catch(err) {
+                        lastErrorMsg = err.message;
+                        // Nếu lỗi do mạng nghẽn của Google, tiếp tục vòng lặp sang model khác
+                        if(lastErrorMsg.toLowerCase().includes("high demand") || lastErrorMsg.toLowerCase().includes("overloaded")) {
+                            console.log(`Model ${modelName} quá tải, đang chuyển kênh...`);
+                            continue;
+                        } else {
+                            // Nếu lỗi khác (ví dụ sai Key), ném lỗi ra ngoài luôn
+                            throw err; 
+                        }
+                    }
                 }
-                
-                contentBox.innerHTML = marked.parse(aiData.candidates[0].content.parts[0].text);
+
+                // Nếu chạy hết tất cả các model mà vẫn không thành công
+                if(!success) {
+                    throw new Error(`Toàn bộ hệ thống Google AI hiện đang quá tải toàn cầu. Vui lòng thử lại sau 2-3 phút.\nChi tiết: ${lastErrorMsg}`);
+                }
                 
             } catch(e) {
                 contentBox.innerHTML = `
                     <div class="p-4 bg-red-50 rounded-2xl border border-red-200">
-                        <span class="text-red-600 text-[11px] font-black uppercase block mb-1">🚨 Lỗi Hệ Thống AI:</span>
+                        <span class="text-red-600 text-[11px] font-black uppercase block mb-1">🚨 Lỗi Hệ Thống:</span>
                         <span class="text-slate-600 text-[11px] font-mono block p-2 bg-white rounded">${e.message}</span>
-                        <p class="text-[10px] mt-2 text-slate-500">Hãy đảm bảo Key không có khoảng trắng hoặc tạo một Key mới trên Google AI Studio.</p>
+                        <p class="text-[10px] mt-2 text-slate-500 italic">Nếu báo lỗi Overloaded, anh vui lòng chờ 1-2 phút rồi bấm RUN AI lại nhé.</p>
                     </div>`;
             } finally { 
                 loadingScreen.classList.add('hidden'); 
+                btnAi.disabled = false;
             }
         }
 
@@ -210,7 +224,7 @@
         
         function saveKeys() {
             const keyInput = document.getElementById('gemini-key').value.trim();
-            localStorage.setItem('hpi_gemini_key_v22', keyInput);
+            localStorage.setItem('hpi_gemini_key_v23', keyInput);
             toggleModal('api-modal');
             if(keyInput) {
                 generateAI();
@@ -229,7 +243,7 @@
             const v = document.getElementById('search-input').value.toUpperCase().trim();
             if(v && !watchlist.includes(v)) {
                 watchlist.unshift(v);
-                localStorage.setItem('hpi_v22_wl', JSON.stringify(watchlist));
+                localStorage.setItem('hpi_v23_wl', JSON.stringify(watchlist));
                 renderWatchlist();
             }
             selectSym(v || activeSym);
@@ -248,7 +262,12 @@
         window.onload = () => {
             renderWatchlist();
             selectSym(activeSym);
-            document.getElementById('gemini-key').value = localStorage.getItem('hpi_gemini_key_v22') || "";
+            // Tự động điền lại Key nếu đã lưu trước đó
+            const savedKey = localStorage.getItem('hpi_gemini_key_v23') || localStorage.getItem('hpi_gemini_key_v22') || "";
+            document.getElementById('gemini-key').value = savedKey;
+            if(savedKey && !localStorage.getItem('hpi_gemini_key_v23')) {
+                 localStorage.setItem('hpi_gemini_key_v23', savedKey);
+            }
         };
     </script>
 </body>
