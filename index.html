@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Henry Pro Invest - Gemini 3.1 Edition</title>
+    <title>Henry Pro Invest V20 - Gemini 3 Flash</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -15,29 +15,25 @@
         .scroll-hidden::-webkit-scrollbar { width: 4px; }
         .scroll-hidden::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .markdown-body h3 { font-size: 11px; font-weight: 900; color: var(--primary-purple); text-transform: uppercase; margin-top: 12px; border-bottom: 1px solid #f3f4f6; padding-bottom: 4px; }
-        .markdown-body p { font-size: 11px; margin-bottom: 8px; line-height: 1.6; color: #475569; }
-        .markdown-body strong { color: #1e293b; }
+        .markdown-body p, .markdown-body li { font-size: 11px; margin-bottom: 8px; line-height: 1.6; color: #475569; }
     </style>
 </head>
 <body class="h-screen flex flex-col p-3 gap-3">
 
     <header class="glass-panel px-6 py-4 rounded-3xl flex justify-between items-center shrink-0">
-        <div class="flex items-center space-x-8">
+        <div class="flex items-center space-x-6">
             <span class="text-2xl font-black tracking-tighter">HENRY PRO <span class="text-purple-600">INVEST</span></span>
-            <div class="relative flex items-center">
-                <input type="text" id="search-input" placeholder="Mã CP (STB, HUT)..." 
-                    class="bg-slate-50 border border-slate-200 text-sm px-5 py-2 rounded-2xl outline-none focus:ring-2 focus:ring-purple-100 focus:border-purple-500 w-48 uppercase font-bold transition-all"
-                    onkeypress="if(event.key === 'Enter') addToWatchlist()">
-                <button onclick="addToWatchlist()" class="ml-2 bg-purple-600 text-white px-5 py-2 rounded-2xl text-[10px] font-bold hover:bg-purple-700 transition">ADD</button>
-            </div>
+            <input type="text" id="search-input" placeholder="Mã CP (VD: HUT)..." 
+                class="bg-slate-50 border border-slate-200 text-sm px-5 py-2 rounded-2xl outline-none focus:ring-2 focus:ring-purple-100 focus:border-purple-500 w-44 uppercase font-bold"
+                onkeypress="if(event.key === 'Enter') addToWatchlist()">
         </div>
 
         <div class="flex items-center space-x-4">
-            <button onclick="toggleModal('api-modal')" class="text-[10px] font-bold text-slate-500 border border-slate-200 px-4 py-2 rounded-2xl hover:bg-slate-50 transition">⚙️ CONFIG AI 3.1</button>
+            <button onclick="toggleModal('api-modal')" class="text-[10px] font-bold border px-4 py-2 rounded-2xl hover:bg-slate-50 transition">⚙️ CONFIG GEMINI 3</button>
             <div class="flex flex-col items-end border-l pl-5">
-                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Hệ thống 2026</span>
-                <span id="conn-status" class="text-xs font-bold text-green-500 flex items-center">
-                    <span class="h-2 w-2 bg-green-500 rounded-full mr-2 animate-pulse"></span> GEMINI 3.1 ONLINE
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Version 2026</span>
+                <span class="text-xs font-bold text-green-500 flex items-center">
+                    <span class="h-2 w-2 bg-green-500 rounded-full mr-2 animate-pulse"></span> GEMINI 3 FLASH ACTIVE
                 </span>
             </div>
         </div>
@@ -45,53 +41,47 @@
 
     <main class="flex-1 grid grid-cols-12 gap-3 min-h-0">
         <aside class="col-span-2 glass-panel rounded-3xl flex flex-col overflow-hidden">
-            <div class="p-4 border-b bg-slate-50/50 flex justify-between items-center">
-                <span class="text-[10px] font-black text-slate-400 uppercase">Danh mục của anh</span>
-                <span id="wl-count" class="text-[10px] font-bold text-purple-600">0</span>
-            </div>
+            <div class="p-4 border-b bg-slate-50/50 flex justify-between items-center font-black text-[10px] text-slate-400 uppercase">Danh mục</div>
             <div id="watchlist-container" class="flex-1 overflow-y-auto scroll-hidden p-2 space-y-1"></div>
         </aside>
 
-        <section class="col-span-6 glass-panel rounded-3xl p-10 flex flex-col items-center justify-center bg-gradient-to-br from-white to-purple-50/50 relative">
+        <section class="col-span-6 glass-panel rounded-3xl p-10 flex flex-col items-center justify-center bg-gradient-to-br from-white to-purple-50/50">
             <div class="text-center mb-8">
                 <h1 id="dash-symbol" class="text-7xl font-black text-slate-800 tracking-tighter mb-2">---</h1>
-                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">DNSE Direct Market Data</p>
+                <p id="dash-status" class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Real-time Analysis Hub</p>
             </div>
 
             <div class="grid grid-cols-2 gap-6 w-full max-w-lg mb-10">
                 <div class="bg-white p-7 rounded-3xl border border-slate-100 text-center shadow-sm">
-                    <span class="block text-[10px] font-bold text-slate-400 uppercase mb-3">Giá Khớp Real-time</span>
-                    <span id="live-price" class="text-5xl font-black transition-colors duration-300">---</span>
+                    <span class="block text-[10px] font-bold text-slate-400 uppercase mb-3">Giá Hiện Tại</span>
+                    <span id="live-price" class="text-5xl font-black">---</span>
                     <span id="live-change" class="block text-xs font-bold mt-3">---</span>
                 </div>
                 <div class="bg-white p-7 rounded-3xl border border-slate-100 shadow-sm text-center flex flex-col justify-center">
-                    <span class="block text-[10px] font-bold text-slate-400 uppercase mb-3">KL Giao dịch</span>
+                    <span class="block text-[10px] font-bold text-slate-400 uppercase mb-3">Khối Lượng Khớp</span>
                     <span id="live-vol" class="text-3xl font-black text-purple-600">---</span>
-                    <span class="block text-[10px] text-slate-400 mt-2 font-bold uppercase">Cổ phiếu</span>
                 </div>
             </div>
 
             <div class="flex space-x-3">
-                <button onclick="window.open('https://vn.tradingview.com/chart/?symbol=HOSE:'+activeSym)" class="bg-slate-900 text-white px-8 py-4 rounded-2xl font-bold text-xs shadow-xl hover:scale-105 transition">TRADINGVIEW</button>
-                <button onclick="window.open('https://fireant.vn/dashboard/content/chart/'+activeSym)" class="bg-white border border-slate-200 px-8 py-4 rounded-2xl font-bold text-xs shadow-sm hover:bg-slate-50 transition">FIREANT</button>
+                <button onclick="openChart('tradingview')" class="bg-slate-900 text-white px-8 py-4 rounded-2xl font-bold text-xs shadow-xl hover:scale-105 transition">TRADINGVIEW (VN)</button>
+                <button onclick="openChart('fireant')" class="bg-white border border-slate-200 px-8 py-4 rounded-2xl font-bold text-xs shadow-sm hover:bg-slate-50 transition">FIREANT FULL</button>
             </div>
         </section>
 
         <aside class="col-span-4 flex flex-col gap-3 overflow-hidden">
-            <div class="glass-panel rounded-3xl p-5 flex justify-between items-center border-b-4 border-purple-600 bg-white">
-                <span class="text-[11px] font-black text-purple-600 uppercase tracking-widest">✨ Gemini 3.1 Analyst</span>
-                <button onclick="generateAI()" id="btn-ai" class="bg-purple-600 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-lg shadow-purple-200 hover:bg-purple-700 transition">RUN ANALYSIS</button>
+            <div class="glass-panel rounded-3xl p-5 flex justify-between items-center border-b-4 border-purple-600">
+                <span class="text-[11px] font-black text-purple-600 uppercase">✨ Gemini 3 Flash Analyst</span>
+                <button onclick="generateAI()" id="btn-ai" class="bg-purple-600 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-lg shadow-purple-200 hover:bg-purple-700 transition">RUN AI</button>
             </div>
             
             <div class="glass-panel rounded-3xl flex-1 overflow-y-auto scroll-hidden p-6 relative">
                 <div id="ai-loading" class="hidden absolute inset-0 bg-white/90 backdrop-blur-sm flex flex-col items-center justify-center z-10">
                     <div class="h-8 w-8 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mb-3"></div>
-                    <span class="text-[10px] font-bold text-purple-600 uppercase animate-pulse">Gemini 3.1 đang quét dữ liệu...</span>
+                    <span class="text-[10px] font-bold text-purple-600 uppercase animate-pulse">Đang nạp dữ liệu Gemini 3...</span>
                 </div>
                 <div id="ai-content" class="markdown-body">
-                    <div class="text-center text-slate-400 text-[11px] mt-20">
-                        Hệ thống đã sẵn sàng cho bản cập nhật 3.1.<br>Vui lòng chọn mã và bấm <b>RUN ANALYSIS</b>.
-                    </div>
+                    <div class="text-center text-slate-400 text-[11px] mt-20">Vui lòng chọn mã và bấm <b>RUN AI</b>.</div>
                 </div>
             </div>
         </aside>
@@ -99,72 +89,58 @@
 
     <div id="api-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center z-50">
         <div class="bg-white p-8 rounded-3xl w-[400px] shadow-2xl">
-            <h3 class="text-xl font-black mb-2 text-slate-800">Cấu hình API</h3>
-            <p class="text-[11px] text-slate-500 mb-6">Sử dụng API Key từ Google AI Studio để kích hoạt động cơ Gemini 3.1.</p>
-            <div class="space-y-5">
-                <div>
-                    <label class="text-[10px] font-bold text-slate-400 uppercase">Gemini API Key</label>
-                    <input type="password" id="gemini-key" class="w-full border border-slate-200 p-3 rounded-2xl text-sm mt-1 focus:border-purple-500 focus:ring-4 focus:ring-purple-50 outline-none transition-all font-mono">
-                </div>
-            </div>
-            <div class="flex justify-end mt-8 space-x-3">
-                <button onclick="toggleModal('api-modal')" class="px-5 py-2 text-xs font-bold text-slate-500">Close</button>
-                <button onclick="saveKeys()" class="px-8 py-2 bg-purple-600 text-white rounded-2xl text-xs font-bold shadow-lg shadow-purple-100">SAVE & ACTIVATE</button>
+            <h3 class="text-xl font-black mb-2">Cấu hình Gemini 3</h3>
+            <p class="text-[11px] text-slate-500 mb-6">Nhập API Key để kích hoạt trí tuệ nhân tạo Gemini 3 Flash.</p>
+            <input type="password" id="gemini-key" class="w-full border border-slate-200 p-3 rounded-2xl text-sm mb-6 outline-none focus:border-purple-500 font-mono">
+            <div class="flex justify-end space-x-3">
+                <button onclick="toggleModal('api-modal')" class="px-5 py-2 text-xs font-bold text-slate-500">Hủy</button>
+                <button onclick="saveKeys()" class="px-8 py-2 bg-purple-600 text-white rounded-2xl text-xs font-bold shadow-lg shadow-purple-100">KÍCH HOẠT</button>
             </div>
         </div>
     </div>
 
     <script>
-        let watchlist = JSON.parse(localStorage.getItem('hpi_v19_wl')) || ["STB", "HUT", "MBB"];
+        let watchlist = JSON.parse(localStorage.getItem('hpi_v20_wl')) || ["HUT", "MBB", "STB"];
         let activeSym = watchlist[0];
         let priceInterval = null;
 
-        // 1. DNSE PUBLIC DATA FETCH (NO CORS ISSUES)
+        // FETCH DATA FIX (DÙNG PROXY ALLORIGINS ĐỂ TRÁNH LỖI ĐEN MÀN HÌNH)
         async function fetchPrice(sym) {
             try {
-                // Sử dụng cổng overview của TCBS/VNDirect lồng qua AllOrigins để đảm bảo 100% không lỗi kết nối
-                const target = encodeURIComponent(`https://apipubaws.tcbs.com.vn/tcanalysis/v1/ticker/${sym}/overview`);
+                const target = encodeURIComponent(`https://finfo-api.vndirect.com.vn/v4/stock_quotes?q=code:${sym}`);
                 const res = await fetch(`https://api.allorigins.win/raw?url=${target}`);
                 const data = await res.json();
                 
-                if(data && data.price) {
-                    renderPriceUI(data);
+                if(data && data.data && data.data.length > 0) {
+                    const s = data.data[0];
+                    const price = s.matchPrice || s.basicPrice;
+                    const change = price - s.basicPrice;
+                    const pct = (change / s.basicPrice) * 100;
+
+                    const pEl = document.getElementById('live-price');
+                    pEl.innerText = price.toFixed(2).replace('.', ',');
+                    pEl.className = `text-5xl font-black ${change > 0 ? 'text-green-500' : (change < 0 ? 'text-red-500' : 'text-yellow-500')}`;
+                    
+                    document.getElementById('live-change').innerText = `${change > 0 ? '+' : ''}${change.toFixed(2).replace('.', ',')} (${pct.toFixed(2).replace('.', ',')}%)`;
+                    document.getElementById('live-change').className = `block text-xs font-bold mt-3 ${change >= 0 ? 'text-green-500' : 'text-red-500'}`;
+                    document.getElementById('live-vol').innerText = (s.nmVolume || 0).toLocaleString('vi-VN');
                 }
-            } catch(e) { console.error("Data fetch error"); }
+            } catch(e) { console.error("Data error"); }
         }
 
-        function renderPriceUI(data) {
-            const p = document.getElementById('live-price');
-            const change = data.priceChange;
-            // Áp dụng định dạng dấu phẩy theo yêu cầu
-            p.innerText = data.price.toFixed(2).replace('.', ',');
-            p.className = `text-5xl font-black ${change > 0 ? 'text-green-500' : (change < 0 ? 'text-red-500' : 'text-yellow-500')}`;
-            document.getElementById('live-vol').innerText = (data.volume || 0).toLocaleString('vi-VN');
-            document.getElementById('live-change').innerText = `${change > 0 ? '+' : ''}${change.toFixed(2).replace('.', ',')} (${(data.priceChangeRatio*100).toFixed(2).replace('.', ',')}%)`;
-            document.getElementById('live-change').className = `block text-xs font-bold mt-3 ${change >= 0 ? 'text-green-500' : 'text-red-500'}`;
-        }
-
-        // 2. GEMINI 3.1 AI CORE
+        // AI CORE: GEMINI 3 FLASH (MODEL NAME UPDATED FOR 2026)
         async function generateAI() {
-            const key = localStorage.getItem('hpi_gemini_key_v19');
+            const key = localStorage.getItem('hpi_gemini_key_v20');
             if(!key) { toggleModal('api-modal'); return; }
 
             document.getElementById('ai-loading').classList.remove('hidden');
             
-            // Dữ liệu nội bộ ưu tiên cho STB theo Ledger 2026
-            const internalData = activeSym === "STB" ? "Dữ liệu SHS 2026: Lợi nhuận sau thuế dự kiến 8.100 tỷ VNĐ. Định giá mục tiêu 70.000 VNĐ." : "";
-            
-            const prompt = `Bạn là Chuyên gia Tài chính tại SHS. Phân tích mã ${activeSym}. 
-            ${internalData}
-            Yêu cầu Markdown (sử dụng dấu phẩy cho số thập phân):
-            ### KỸ THUẬT (Wyckoff & Volume Analyst)
-            ### CƠ BẢN (Chất lượng tài sản & Định giá)
-            ### KHUYẾN NGHỊ VÙNG MUA
-            (Ngắn gọn, chuyên nghiệp)`;
+            const stbData = activeSym === "STB" ? "Lưu ý nội bộ: LNST 2026 ước 8.100 tỷ, mục tiêu giá 70.000 VNĐ." : "";
+            const prompt = `Bạn là Chuyên gia SHS Analyst. Phân tích mã ${activeSym}. ${stbData} Yêu cầu: 1. Kỹ thuật (Wyckoff/Ichimoku), 2. Cơ bản (P/E, P/B, Tài sản), 3. Vùng mua mục tiêu. Trình bày Markdown chuyên nghiệp.`;
 
             try {
-                // MODEL UPDATE TO GEMINI 3.1
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
+                // MODEL NAME: gemini-3-flash (Model chuẩn cho năm 2026)
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash:generateContent?key=${key}`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ contents: [{parts: [{text: prompt}]}] })
@@ -173,17 +149,18 @@
                 if(d.error) throw new Error(d.error.message);
                 document.getElementById('ai-content').innerHTML = marked.parse(d.candidates[0].content.parts[0].text);
             } catch(e) {
-                document.getElementById('ai-content').innerHTML = `<div class="bg-red-50 p-4 rounded-2xl text-red-600 text-[10px]">Lỗi: ${e.message}</div>`;
-            } finally {
-                document.getElementById('ai-loading').classList.add('hidden');
-            }
+                document.getElementById('ai-content').innerHTML = `<div class="p-4 bg-red-50 rounded-2xl text-red-600 text-[10px]">Lỗi hệ thống AI: ${e.message}</div>`;
+            } finally { document.getElementById('ai-loading').classList.add('hidden'); }
         }
 
-        // 3. UI LOGIC
+        function openChart(type) {
+            const url = type === 'tradingview' ? `https://vn.tradingview.com/chart/?symbol=HOSE:${activeSym}` : `https://fireant.vn/dashboard/content/chart/${activeSym}`;
+            window.open(url, `Chart_${activeSym}`, "width=1200,height=700");
+        }
+
         function toggleModal(id) { document.getElementById(id).classList.toggle('hidden'); }
-        
         function saveKeys() {
-            localStorage.setItem('hpi_gemini_key_v19', document.getElementById('gemini-key').value);
+            localStorage.setItem('hpi_gemini_key_v20', document.getElementById('gemini-key').value);
             toggleModal('api-modal');
             generateAI();
         }
@@ -194,14 +171,13 @@
                 <div onclick="selectSym('${s}')" class="p-4 rounded-2xl cursor-pointer transition-all mb-1 ${s === activeSym ? 'active-symbol shadow-sm' : 'hover:bg-slate-50'}">
                     <span class="text-sm font-semibold">${s}</span>
                 </div>`).join('');
-            document.getElementById('wl-count').innerText = watchlist.length;
         }
 
         function addToWatchlist() {
             const v = document.getElementById('search-input').value.toUpperCase().trim();
             if(v && !watchlist.includes(v)) {
                 watchlist.unshift(v);
-                localStorage.setItem('hpi_v19_wl', JSON.stringify(watchlist));
+                localStorage.setItem('hpi_v20_wl', JSON.stringify(watchlist));
                 renderWatchlist();
             }
             selectSym(v || activeSym);
@@ -220,7 +196,7 @@
         window.onload = () => {
             renderWatchlist();
             selectSym(activeSym);
-            document.getElementById('gemini-key').value = localStorage.getItem('hpi_gemini_key_v19') || "";
+            document.getElementById('gemini-key').value = localStorage.getItem('hpi_gemini_key_v20') || "";
         };
     </script>
 </body>
