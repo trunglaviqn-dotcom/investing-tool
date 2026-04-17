@@ -3,52 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Henry Pro Invest - Premium Terminal</title>
+    <title>Henry Pro Invest - AI Terminal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
-        :root {
-            --primary-purple: #7c3aed;
-            --light-purple: #f5f3ff;
-            --border-color: #e5e7eb;
-        }
-        body { 
-            font-family: 'Plus Jakarta Sans', sans-serif; 
-            background-color: #f8fafc; 
-            color: #1e293b;
-            overflow: hidden;
-        }
-        .glass-panel { 
-            background: #ffffff; 
-            border: 1px solid var(--border-color);
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
-        }
-        .active-tab { 
-            background-color: var(--primary-purple); 
-            color: white !important;
-        }
-        .watchlist-item:hover {
-            background-color: var(--light-purple);
-        }
-        .active-symbol {
-            border-left: 4px solid var(--primary-purple);
-            background-color: var(--light-purple);
-        }
+        :root { --primary-purple: #7c3aed; --light-purple: #f5f3ff; --border-color: #e5e7eb; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; color: #1e293b; overflow: hidden; }
+        .glass-panel { background: #ffffff; border: 1px solid var(--border-color); box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05); }
+        .active-symbol { border-left: 4px solid var(--primary-purple); background-color: var(--light-purple); }
         .scroll-hidden::-webkit-scrollbar { width: 4px; }
         .scroll-hidden::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .markdown-body h3 { font-size: 11px; font-weight: 900; color: #7c3aed; text-transform: uppercase; margin-top: 12px; margin-bottom: 4px; }
+        .markdown-body p { font-size: 11px; color: #475569; margin-bottom: 8px; line-height: 1.6; }
+        .markdown-body strong { color: #1e293b; font-weight: 800; }
+        .markdown-body ul { list-style-type: disc; padding-left: 16px; font-size: 11px; color: #475569; margin-bottom: 8px;}
     </style>
 </head>
 <body class="h-screen flex flex-col p-3 gap-3">
 
     <header class="glass-panel px-6 py-4 rounded-2xl flex justify-between items-center shrink-0">
         <div class="flex items-center space-x-8">
-            <span class="text-2xl font-black tracking-tighter text-slate-900">
-                HENRY PRO <span class="text-[#7c3aed]">INVEST</span>
-            </span>
+            <span class="text-2xl font-black tracking-tighter text-slate-900">HENRY PRO <span class="text-[#7c3aed]">INVEST</span></span>
             
-            <div class="relative flex items-center group">
+            <div class="relative flex items-center">
                 <input type="text" id="search-input" placeholder="Gõ mã (VD: MBB, HUT)..." 
-                    class="bg-slate-50 border border-slate-200 text-sm px-5 py-2 rounded-xl outline-none focus:border-[#7c3aed] focus:ring-2 focus:ring-purple-100 w-72 transition-all uppercase font-semibold"
+                    class="bg-slate-50 border border-slate-200 text-sm px-5 py-2 rounded-xl outline-none focus:border-[#7c3aed] focus:ring-2 focus:ring-purple-100 w-64 transition-all uppercase font-semibold"
                     onkeypress="if(event.key === 'Enter') addToWatchlist()">
                 <button onclick="addToWatchlist()" class="ml-3 bg-[#7c3aed] text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-purple-700 transition shadow-lg shadow-purple-200">
                     + THÊM MÃ
@@ -56,12 +36,14 @@
             </div>
         </div>
 
-        <div class="flex items-center space-x-6">
-            <div class="flex flex-col items-end">
+        <div class="flex items-center space-x-4">
+            <button onclick="toggleApiModal()" class="text-[11px] font-bold text-slate-500 hover:text-purple-600 border border-slate-200 px-3 py-1.5 rounded-lg flex items-center">
+                ⚙️ CÀI ĐẶT GEMINI AI
+            </button>
+            <div class="flex flex-col items-end border-l border-slate-200 pl-4">
                 <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Trạng thái dữ liệu</span>
                 <span class="text-xs font-bold text-green-500 flex items-center">
-                    <span class="h-2 w-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
-                    HỆ THỐNG SẴN SÀNG
+                    <span class="h-2 w-2 bg-green-500 rounded-full mr-2 animate-pulse"></span> LIVE PRICE READY
                 </span>
             </div>
         </div>
@@ -74,138 +56,198 @@
                 <span class="text-[11px] font-black text-slate-400 uppercase tracking-wider">Danh mục</span>
                 <span id="wl-count" class="text-[10px] font-bold bg-white border px-2 py-0.5 rounded-full text-purple-600">0</span>
             </div>
-            <div id="watchlist-container" class="flex-1 overflow-y-auto scroll-hidden p-2 space-y-1">
-                </div>
+            <div id="watchlist-container" class="flex-1 overflow-y-auto scroll-hidden p-2 space-y-1"></div>
         </aside>
 
-        <section class="col-span-7 glass-panel rounded-2xl overflow-y-auto scroll-hidden p-8 flex flex-col items-center justify-center bg-gradient-to-br from-white to-purple-50/50 relative">
+        <section class="col-span-6 glass-panel rounded-2xl overflow-y-auto scroll-hidden p-8 flex flex-col items-center justify-center bg-gradient-to-br from-white to-purple-50/50 relative">
             
-            <div class="text-center mb-8">
+            <div class="text-center mb-6">
                 <h1 id="dash-symbol" class="text-6xl font-black text-slate-800 tracking-tighter mb-2">---</h1>
-                <p id="dash-status" class="text-sm font-bold text-slate-400 uppercase tracking-widest">Vui lòng chọn mã để phân tích</p>
+                <p id="dash-company" class="text-sm font-bold text-slate-400 uppercase tracking-widest">Đang tải dữ liệu...</p>
             </div>
 
-            <div class="grid grid-cols-3 gap-6 w-full max-w-2xl mb-10">
-                <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm text-center">
-                    <span class="block text-[10px] font-bold text-slate-400 uppercase mb-1">RSI (14 Ngày)</span>
-                    <span class="text-2xl font-black text-purple-600">58.4</span>
-                    <span class="block text-[10px] text-green-500 mt-1 font-bold">Tích cực</span>
+            <div class="grid grid-cols-2 gap-6 w-full max-w-md mb-8">
+                <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm text-center">
+                    <span class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Giá Hiện Tại (Real-time)</span>
+                    <div class="flex justify-center items-end space-x-2">
+                        <span id="live-price" class="text-4xl font-black text-slate-800">---</span>
+                    </div>
+                    <span id="live-change" class="block text-xs font-bold mt-2 text-slate-400">---</span>
                 </div>
-                <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm text-center">
-                    <span class="block text-[10px] font-bold text-slate-400 uppercase mb-1">MACD Trend</span>
-                    <span class="text-2xl font-black text-purple-600">BULL</span>
-                    <span class="block text-[10px] text-green-500 mt-1 font-bold">Cắt lên Signal</span>
-                </div>
-                <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm text-center">
-                    <span class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Dòng tiền lớn</span>
-                    <span class="text-2xl font-black text-purple-600">GOM</span>
-                    <span class="block text-[10px] text-slate-400 mt-1 font-bold">Smart Money In</span>
+                <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm text-center flex flex-col justify-center">
+                    <span class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Tổng Khối Lượng</span>
+                    <span id="live-vol" class="text-2xl font-black text-purple-600">---</span>
                 </div>
             </div>
 
             <div class="flex space-x-4">
-                <button onclick="openChartPopup('tradingview')" class="flex items-center bg-slate-900 hover:bg-black text-white px-6 py-4 rounded-xl font-bold transition shadow-xl shadow-slate-200">
-                    <svg class="w-5 h-5 mr-3 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path></svg>
-                    Mở Chart TradingView
+                <button onclick="openChartPopup('tradingview')" class="flex items-center bg-slate-900 hover:bg-black text-white px-5 py-3 rounded-xl font-bold transition shadow-lg">
+                    📊 Mở Chart TradingView
                 </button>
-                <button onclick="openChartPopup('fireant')" class="flex items-center bg-white border border-slate-200 hover:border-purple-500 text-slate-800 px-6 py-4 rounded-xl font-bold transition shadow-sm hover:shadow-md">
-                    <svg class="w-5 h-5 mr-3 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
-                    Mở Chart Fireant
+                <button onclick="openChartPopup('fireant')" class="flex items-center bg-white border border-slate-200 hover:border-purple-500 text-slate-800 px-5 py-3 rounded-xl font-bold transition shadow-sm">
+                    🔥 Mở Chart Fireant
                 </button>
             </div>
             
-            <p class="text-[10px] text-slate-400 mt-6 max-w-md text-center">
-                * Biểu đồ sẽ được mở trong cửa sổ nổi (Pop-up) độc lập để vượt qua giới hạn bản quyền dữ liệu của sàn HOSE/HNX.
+            <p class="text-[10px] text-slate-400 mt-6 max-w-sm text-center">
+                * Dữ liệu giá được lấy Real-time từ cổng API Public. Biểu đồ bật dạng Pop-up để lách bản quyền HOSE.
             </p>
-
         </section>
 
-        <aside class="col-span-3 flex flex-col gap-3 overflow-hidden">
-            
-            <div class="glass-panel rounded-2xl p-1.5 flex shrink-0 space-x-1">
-                <button onclick="setTab('tech')" id="btn-tech" class="flex-1 py-2.5 text-[11px] font-black rounded-xl active-tab transition-all">KỸ THUẬT (TA)</button>
-                <button onclick="setTab('fund')" id="btn-fund" class="flex-1 py-2.5 text-[11px] font-black rounded-xl text-slate-500 hover:bg-slate-50 transition-all">CƠ BẢN (FA)</button>
+        <aside class="col-span-4 flex flex-col gap-3 overflow-hidden">
+            <div class="glass-panel rounded-2xl p-4 flex justify-between items-center shrink-0 border-b-4 border-purple-500">
+                <span class="text-[11px] font-black text-purple-600 uppercase tracking-widest flex items-center">
+                    ✨ Gemini AI Analyst
+                </span>
+                <button onclick="generateAIAnalysis()" id="btn-generate" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-1.5 rounded-lg text-xs font-bold transition">
+                    PHÂN TÍCH MÃ NÀY
+                </button>
             </div>
 
-            <div id="analysis-box" class="glass-panel rounded-2xl flex-1 overflow-y-auto scroll-hidden p-5">
+            <div class="glass-panel rounded-2xl flex-1 overflow-y-auto scroll-hidden p-5 relative">
+                <div id="ai-loading" class="hidden absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center">
+                    <div class="h-8 w-8 rounded-full border-4 border-purple-200 border-t-purple-600 animate-spin mb-3"></div>
+                    <span class="text-xs font-bold text-purple-600 animate-pulse">AI đang phân tích BCTC và Dòng tiền...</span>
                 </div>
-
-            <div class="glass-panel rounded-2xl p-5 border-l-4 border-purple-500 bg-gradient-to-br from-white to-purple-50/30">
-                <div class="flex justify-between items-start mb-3">
-                    <span class="text-[10px] font-black text-purple-400 uppercase tracking-widest">Hệ thống khuyến nghị</span>
-                    <span id="rec-label" class="text-[10px] font-black px-2 py-1 rounded bg-purple-600 text-white">---</span>
+                
+                <div id="ai-content" class="markdown-body">
+                    <div class="text-center text-slate-400 text-xs mt-10">
+                        Bấm nút <b>"Phân tích mã này"</b> để AI cập nhật định giá, dòng tiền, và tín hiệu kỹ thuật mới nhất.
+                        <br><br>
+                        <i>(Yêu cầu phải cài đặt API Key trong phần Cài đặt trước)</i>
+                    </div>
                 </div>
-                <div class="text-xs font-semibold text-slate-500 mb-1">Vùng mua mục tiêu:</div>
-                <div id="buy-zone" class="text-2xl font-black text-slate-900 tracking-tighter">---</div>
             </div>
         </aside>
     </main>
 
+    <div id="api-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-2xl w-[400px] shadow-2xl">
+            <h3 class="text-lg font-black text-slate-800 mb-2">Cấu hình Gemini AI</h3>
+            <p class="text-xs text-slate-500 mb-4">Nhập API Key của Google Gemini. Key được lưu an toàn 100% trong trình duyệt máy tính của anh, không gửi đi đâu khác ngoài server Google.</p>
+            <input type="password" id="gemini-key-input" placeholder="Dán API Key vào đây..." class="w-full border border-slate-300 p-2 rounded-lg text-sm mb-4 outline-none focus:border-purple-500">
+            <div class="flex justify-end space-x-2">
+                <button onclick="toggleApiModal()" class="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-800">Hủy</button>
+                <button onclick="saveApiKey()" class="px-4 py-2 text-xs font-bold bg-purple-600 text-white rounded-lg hover:bg-purple-700">Lưu Key</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // 1. DATA & LOCALSTORAGE
-        let symbols = JSON.parse(localStorage.getItem('henry_v13_wl')) || ["MBB", "HUT", "STB"];
+        let symbols = JSON.parse(localStorage.getItem('henry_v14_wl')) || ["MBB", "HUT", "STB"];
         let activeSym = symbols[0];
-        let currentTab = 'tech';
+        let priceInterval = null;
 
-        const ANALYTICS = {
-            "MBB": {
-                ta: {
-                    wyckoff: "Pha C (Spring/Test). Cổ phiếu đang kiểm định lại vùng hỗ trợ cứng. Vol cạn kiệt cho thấy lực cung đã suy yếu.",
-                    ichimoku: "Giá đang giao dịch lấp lửng trong mây Kumo. Cần một phiên nổ Vol để bứt thoát.",
-                    macd: "MACD đang hội tụ tại đường Zero, chờ tín hiệu cắt lên.",
-                    targets: ["24,50", "28,00", "32,00"],
-                    rec: "MUA GOM"
-                },
-                fa: {
-                    valuation: "P/B quanh 1.1x, cực kỳ hấp dẫn cho một ngân hàng top đầu về Casa và an toàn vốn.",
-                    cashflow: "Tăng trưởng tín dụng ổn định. Thu nhập ngoài lãi (Bancassurance) đang phục hồi.",
-                    assets: "Tỷ lệ bao phủ nợ xấu (LLR) thuộc nhóm cao nhất hệ thống ngân hàng.",
-                    competitors: "TCB, ACB, VPB. MBB có lợi thế hệ sinh thái quân đội vững chắc.",
-                    status: "ĐỊNH GIÁ RẺ",
-                    buy: "21,5 - 22,5"
+        // 2. TÍNH NĂNG FETCH GIÁ REAL-TIME (TỪ API PUBLIC VNDIRECT)
+        async function fetchLivePrice(sym) {
+            try {
+                // API Public VNDirect không bị lỗi CORS
+                const res = await fetch(`https://finfo-api.vndirect.com.vn/v4/stock_quotes?q=code:${sym}`);
+                const data = await res.json();
+                
+                if (data && data.data && data.data.length > 0) {
+                    const stock = data.data[0];
+                    const price = stock.matchPrice || stock.basicPrice;
+                    const refPrice = stock.basicPrice;
+                    const vol = stock.nmVolume || 0;
+                    
+                    const changeVal = price - refPrice;
+                    const changePct = (changeVal / refPrice) * 100;
+                    
+                    let colorClass = 'text-green-500';
+                    let sign = '+';
+                    if (changeVal < 0) { colorClass = 'text-red-500'; sign = ''; }
+                    else if (changeVal === 0) { colorClass = 'text-yellow-500'; sign = ''; }
+
+                    document.getElementById('dash-company').innerText = `Dữ liệu thời gian thực cập nhật thành công`;
+                    document.getElementById('live-price').innerText = price.toFixed(2).replace('.', ',');
+                    document.getElementById('live-price').className = `text-4xl font-black ${colorClass}`;
+                    
+                    document.getElementById('live-change').innerText = `${sign}${changeVal.toFixed(2).replace('.', ',')} (${sign}${changePct.toFixed(2).replace('.', ',')}%)`;
+                    document.getElementById('live-change').className = `block text-xs font-bold mt-2 ${colorClass}`;
+                    
+                    document.getElementById('live-vol').innerText = vol.toLocaleString('vi-VN');
+                } else {
+                    throw new Error("Không có dữ liệu");
                 }
-            },
-            "HUT": {
-                ta: {
-                    wyckoff: "Pha D (Markup). Dòng tiền thông minh bắt đầu đẩy giá khỏi nền 16,5 - 17,2. SOS xuất hiện rõ nét.",
-                    ichimoku: "Giá nằm trên mây Kumo. Tenkan cắt lên Kijun xác nhận xu hướng tăng ngắn hạn.",
-                    macd: "MACD duy trì phân kỳ dương. RSI ổn định ở ngưỡng 58,2.",
-                    targets: ["18,50", "22,00", "28,50"],
-                    rec: "STRONG BUY"
-                },
-                fa: {
-                    valuation: "P/B hiện tại 1,2x - Thấp hơn trung bình ngành (1,8x).",
-                    cashflow: "CFO dương mạnh nhờ độc quyền thu phí không dừng VETC.",
-                    assets: "Sở hữu hệ sinh thái hạ tầng giao thông số 1 VN.",
-                    competitors: "CII, HHV (HUT có lợi thế tuyệt đối về dòng tiền).",
-                    status: "ĐỊNH GIÁ RẺ",
-                    buy: "16,5 - 17,2"
-                }
+            } catch (error) {
+                document.getElementById('live-price').innerText = '---';
+                document.getElementById('live-change').innerText = 'Ngoài giờ GD hoặc sai mã';
+                document.getElementById('live-change').className = 'block text-xs font-bold mt-2 text-slate-400';
             }
-        };
+        }
 
-        // 2. TÍNH NĂNG MỞ POP-UP CHART (LÁCH X-FRAME-OPTIONS)
+        // 3. TÍNH NĂNG PHÂN TÍCH BẰNG GEMINI AI
+        function toggleApiModal() {
+            const modal = document.getElementById('api-modal');
+            modal.classList.toggle('hidden');
+            if (!modal.classList.contains('hidden')) {
+                document.getElementById('gemini-key-input').value = localStorage.getItem('gemini_api_key') || "";
+            }
+        }
+
+        function saveApiKey() {
+            const key = document.getElementById('gemini-key-input').value.trim();
+            localStorage.setItem('gemini_api_key', key);
+            toggleApiModal();
+        }
+
+        async function generateAIAnalysis() {
+            const apiKey = localStorage.getItem('gemini_api_key');
+            if (!apiKey) {
+                alert("Vui lòng cài đặt Gemini API Key trước!");
+                toggleApiModal();
+                return;
+            }
+
+            const btn = document.getElementById('btn-generate');
+            const loading = document.getElementById('ai-loading');
+            const content = document.getElementById('ai-content');
+
+            btn.disabled = true;
+            loading.classList.remove('hidden');
+
+            const prompt = `Đóng vai là một Chuyên gia Phân tích Tài chính cá nhân. Hãy phân tích ngắn gọn mã cổ phiếu chứng khoán Việt Nam: ${activeSym}. 
+            Yêu cầu format bằng Markdown, KHÔNG dùng thẻ Code Block, bắt buộc gồm 3 phần:
+            ### KỸ THUẬT (Wyckoff & Động lượng)
+            (Viết 2-3 câu về xu hướng, RSI, MACD, Volume)
+            ### CƠ BẢN (Định giá & Tài sản)
+            (Viết 2-3 câu về định giá đắt hay rẻ, P/E, P/B, chất lượng dòng tiền)
+            ### KẾT LUẬN & VÙNG MUA
+            (Khuyến nghị Mua/Bán/Nắm giữ và cho 1 khoảng giá cụ thể)`;
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }],
+                        generationConfig: { temperature: 0.2 }
+                    })
+                });
+
+                const data = await response.json();
+                if (data.error) throw new Error(data.error.message);
+
+                const aiText = data.candidates[0].content.parts[0].text;
+                content.innerHTML = marked.parse(aiText); // Convert Markdown to HTML
+            } catch (error) {
+                content.innerHTML = `<div class="text-red-500 text-xs font-bold">Lỗi kết nối AI: Khóa API của anh không hợp lệ hoặc bị quá tải.</div>`;
+            } finally {
+                loading.classList.add('hidden');
+                btn.disabled = false;
+            }
+        }
+
+        // 4. MỞ POPUP CHART & WATCHLIST
         function openChartPopup(platform) {
-            // Xác định tiền tố sàn cho TradingView
-            const HNX_SYMBOLS = ['HUT', 'SHS', 'CEO', 'IDC', 'MBS', 'PVS'];
-            const UPCOM_SYMBOLS = ['BSR', 'VEA', 'QNS', 'VGI', 'ACV'];
-            
-            let tvPrefix = 'HOSE:';
-            if (HNX_SYMBOLS.includes(activeSym)) tvPrefix = 'HNX:';
-            if (UPCOM_SYMBOLS.includes(activeSym)) tvPrefix = 'UPCOM:';
-
-            let url = '';
-            if (platform === 'tradingview') {
-                url = `https://vn.tradingview.com/chart/?symbol=${tvPrefix}${activeSym}`;
-            } else if (platform === 'fireant') {
-                url = `https://fireant.vn/dashboard/content/chart/${activeSym}`;
-            }
-
-            // Mở cửa sổ popup với kích thước chuẩn, không có thanh địa chỉ (như app thật)
+            let url = platform === 'tradingview' 
+                ? `https://vn.tradingview.com/chart/?symbol=HOSE:${activeSym}` 
+                : `https://fireant.vn/dashboard/content/chart/${activeSym}`;
             window.open(url, `Chart_${activeSym}`, "width=1200,height=700,menubar=no,toolbar=no,location=no,status=no");
         }
 
-        // 3. WATCHLIST LOGIC
         function renderWatchlist() {
             const container = document.getElementById('watchlist-container');
             container.innerHTML = '';
@@ -227,7 +269,7 @@
             const cleanSym = val.includes(':') ? val.split(':')[1] : val;
             if (!symbols.includes(cleanSym)) {
                 symbols.push(cleanSym);
-                localStorage.setItem('henry_v13_wl', JSON.stringify(symbols));
+                localStorage.setItem('henry_v14_wl', JSON.stringify(symbols));
                 renderWatchlist();
             }
             document.getElementById('search-input').value = '';
@@ -237,7 +279,7 @@
         function removeSym(e, s) {
             e.stopPropagation();
             symbols = symbols.filter(item => item !== s);
-            localStorage.setItem('henry_v13_wl', JSON.stringify(symbols));
+            localStorage.setItem('henry_v14_wl', JSON.stringify(symbols));
             renderWatchlist();
             if (activeSym === s && symbols.length > 0) selectSym(symbols[0]);
         }
@@ -245,50 +287,16 @@
         function selectSym(s) {
             activeSym = s;
             document.getElementById('dash-symbol').innerText = s;
-            document.getElementById('dash-status').innerText = `Dữ liệu phân tích cập nhật phiên cuối`;
-            updateAnalysisUI(s);
-            renderWatchlist();
-        }
-
-        // 4. ANALYSIS UPDATE
-        function setTab(t) {
-            currentTab = t;
-            document.getElementById('btn-tech').className = t === 'tech' ? 'flex-1 py-2.5 text-[11px] font-black rounded-xl active-tab transition-all' : 'flex-1 py-2.5 text-[11px] font-black rounded-xl text-slate-500 hover:bg-slate-50 transition-all';
-            document.getElementById('btn-fund').className = t === 'fund' ? 'flex-1 py-2.5 text-[11px] font-black rounded-xl active-tab transition-all' : 'flex-1 py-2.5 text-[11px] font-black rounded-xl text-slate-500 hover:bg-slate-50 transition-all';
-            updateAnalysisUI(activeSym);
-        }
-
-        function updateAnalysisUI(sym) {
-            const defaultData = {
-                ta: { wyckoff: "Đang thu thập dữ liệu...", ichimoku: "Cần quan sát thêm.", macd: "Hệ thống đang đồng bộ.", targets: ["---", "---", "---"], rec: "QUAN SÁT" },
-                fa: { valuation: "Đang quét BCTC...", cashflow: "Đang phân tích dòng tiền...", assets: "Đang truy xuất...", competitors: "Đang so sánh...", status: "ĐANG CHỜ", buy: "Chưa xác định" }
-            };
-            const data = ANALYTICS[sym] || defaultData;
-            const box = document.getElementById('analysis-box');
+            document.getElementById('ai-content').innerHTML = `<div class="text-center text-slate-400 text-xs mt-10">Bấm nút <b>"Phân tích mã này"</b> để AI cập nhật phân tích mới nhất.</div>`;
             
-            if (currentTab === 'tech') {
-                box.innerHTML = `
-                    <div class="space-y-5">
-                        <section><h4 class="text-[10px] font-black text-purple-500 uppercase mb-2">Wyckoff / Dòng tiền</h4><p class="text-xs leading-relaxed text-slate-600 font-medium">${data.ta.wyckoff}</p></section>
-                        <section><h4 class="text-[10px] font-black text-purple-500 uppercase mb-2">Ichimoku Cloud</h4><p class="text-xs leading-relaxed text-slate-600 font-medium">${data.ta.ichimoku}</p></section>
-                        <section><h4 class="text-[10px] font-black text-purple-500 uppercase mb-2">Động lượng MACD/RSI</h4><p class="text-xs leading-relaxed text-slate-600 font-medium">${data.ta.macd}</p></section>
-                        <div class="grid grid-cols-3 gap-2 pt-4 border-t border-slate-100">
-                            <div class="text-center bg-slate-50 p-2 rounded-lg"><span class="block text-[8px] font-bold text-slate-400">T+</span><span class="text-xs font-black text-purple-600">${data.ta.targets[0]}</span></div>
-                            <div class="text-center bg-slate-50 p-2 rounded-lg"><span class="block text-[8px] font-bold text-slate-400">TRUNG</span><span class="text-xs font-black text-purple-600">${data.ta.targets[1]}</span></div>
-                            <div class="text-center bg-slate-50 p-2 rounded-lg"><span class="block text-[8px] font-bold text-slate-400">DÀI</span><span class="text-xs font-black text-purple-600">${data.ta.targets[2]}</span></div>
-                        </div>
-                    </div>`;
-            } else {
-                box.innerHTML = `
-                    <div class="space-y-5">
-                        <section><h4 class="text-[10px] font-black text-blue-500 uppercase mb-2">Định giá & Dòng tiền</h4><p class="text-xs leading-relaxed text-slate-600 font-medium">${data.fa.valuation} <br> ${data.fa.cashflow}</p></section>
-                        <section><h4 class="text-[10px] font-black text-blue-500 uppercase mb-2">Chất lượng tài sản</h4><p class="text-xs leading-relaxed text-slate-600 font-medium">${data.fa.assets}</p></section>
-                        <section><h4 class="text-[10px] font-black text-blue-500 uppercase mb-2">Đối thủ & Ngành</h4><p class="text-xs leading-relaxed text-slate-600 font-medium">${data.fa.competitors}</p></section>
-                        <div class="bg-blue-50 p-3 rounded-xl border border-blue-100"><span class="text-[10px] font-black text-blue-600 block mb-1 uppercase">Kết luận định giá</span><span class="text-xs font-bold text-blue-900">${data.fa.status}</span></div>
-                    </div>`;
-            }
-            document.getElementById('rec-label').innerText = data.ta.rec;
-            document.getElementById('buy-zone').innerText = data.fa.buy;
+            // Xóa bộ đếm giá cũ
+            if(priceInterval) clearInterval(priceInterval);
+            
+            // Gọi giá ngay lập tức và set lặp lại mỗi 5 giây
+            fetchLivePrice(s);
+            priceInterval = setInterval(() => fetchLivePrice(s), 5000);
+            
+            renderWatchlist();
         }
 
         // INIT
