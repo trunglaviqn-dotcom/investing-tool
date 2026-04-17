@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Henry Pro Invest V20 - Gemini 3 Flash</title>
+    <title>Henry Pro Invest V22 - Auto Discovery AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -29,11 +29,11 @@
         </div>
 
         <div class="flex items-center space-x-4">
-            <button onclick="toggleModal('api-modal')" class="text-[10px] font-bold border px-4 py-2 rounded-2xl hover:bg-slate-50 transition">⚙️ CONFIG GEMINI 3</button>
+            <button onclick="toggleModal('api-modal')" class="text-[10px] font-bold border px-4 py-2 rounded-2xl hover:bg-slate-50 transition">⚙️ CONFIG API KEY</button>
             <div class="flex flex-col items-end border-l pl-5">
-                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Version 2026</span>
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Hệ thống AI Động</span>
                 <span class="text-xs font-bold text-green-500 flex items-center">
-                    <span class="h-2 w-2 bg-green-500 rounded-full mr-2 animate-pulse"></span> GEMINI 3 FLASH ACTIVE
+                    <span class="h-2 w-2 bg-green-500 rounded-full mr-2 animate-pulse"></span> AUTO DISCOVERY
                 </span>
             </div>
         </div>
@@ -71,14 +71,14 @@
 
         <aside class="col-span-4 flex flex-col gap-3 overflow-hidden">
             <div class="glass-panel rounded-3xl p-5 flex justify-between items-center border-b-4 border-purple-600">
-                <span class="text-[11px] font-black text-purple-600 uppercase">✨ Gemini 3 Flash Analyst</span>
+                <span class="text-[11px] font-black text-purple-600 uppercase">✨ Henry AI Analyst</span>
                 <button onclick="generateAI()" id="btn-ai" class="bg-purple-600 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-lg shadow-purple-200 hover:bg-purple-700 transition">RUN AI</button>
             </div>
             
             <div class="glass-panel rounded-3xl flex-1 overflow-y-auto scroll-hidden p-6 relative">
                 <div id="ai-loading" class="hidden absolute inset-0 bg-white/90 backdrop-blur-sm flex flex-col items-center justify-center z-10">
                     <div class="h-8 w-8 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mb-3"></div>
-                    <span class="text-[10px] font-bold text-purple-600 uppercase animate-pulse">Đang nạp dữ liệu Gemini 3...</span>
+                    <span id="ai-status-text" class="text-[10px] font-bold text-purple-600 uppercase animate-pulse">Đang kết nối API...</span>
                 </div>
                 <div id="ai-content" class="markdown-body">
                     <div class="text-center text-slate-400 text-[11px] mt-20">Vui lòng chọn mã và bấm <b>RUN AI</b>.</div>
@@ -89,9 +89,9 @@
 
     <div id="api-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center z-50">
         <div class="bg-white p-8 rounded-3xl w-[400px] shadow-2xl">
-            <h3 class="text-xl font-black mb-2">Cấu hình Gemini 3</h3>
-            <p class="text-[11px] text-slate-500 mb-6">Nhập API Key để kích hoạt trí tuệ nhân tạo Gemini 3 Flash.</p>
-            <input type="password" id="gemini-key" class="w-full border border-slate-200 p-3 rounded-2xl text-sm mb-6 outline-none focus:border-purple-500 font-mono">
+            <h3 class="text-xl font-black mb-2">Cấu hình API Key</h3>
+            <p class="text-[11px] text-slate-500 mb-6">Nhập khóa API Gemini của anh để hệ thống hoạt động.</p>
+            <input type="password" id="gemini-key" class="w-full border border-slate-200 p-3 rounded-2xl text-sm mb-6 outline-none focus:border-purple-500 font-mono" placeholder="Dán API Key vào đây...">
             <div class="flex justify-end space-x-3">
                 <button onclick="toggleModal('api-modal')" class="px-5 py-2 text-xs font-bold text-slate-500">Hủy</button>
                 <button onclick="saveKeys()" class="px-8 py-2 bg-purple-600 text-white rounded-2xl text-xs font-bold shadow-lg shadow-purple-100">KÍCH HOẠT</button>
@@ -100,11 +100,11 @@
     </div>
 
     <script>
-        let watchlist = JSON.parse(localStorage.getItem('hpi_v20_wl')) || ["HUT", "MBB", "STB"];
+        let watchlist = JSON.parse(localStorage.getItem('hpi_v22_wl')) || ["HUT", "MBB", "STB"];
         let activeSym = watchlist[0];
         let priceInterval = null;
 
-        // FETCH DATA FIX (DÙNG PROXY ALLORIGINS ĐỂ TRÁNH LỖI ĐEN MÀN HÌNH)
+        // FETCH DATA TỪ VNDIRECT QUA ALLORIGINS
         async function fetchPrice(sym) {
             try {
                 const target = encodeURIComponent(`https://finfo-api.vndirect.com.vn/v4/stock_quotes?q=code:${sym}`);
@@ -125,32 +125,80 @@
                     document.getElementById('live-change').className = `block text-xs font-bold mt-3 ${change >= 0 ? 'text-green-500' : 'text-red-500'}`;
                     document.getElementById('live-vol').innerText = (s.nmVolume || 0).toLocaleString('vi-VN');
                 }
-            } catch(e) { console.error("Data error"); }
+            } catch(e) { console.error("Lỗi dữ liệu giá"); }
         }
 
-        // AI CORE: GEMINI 3 FLASH (MODEL NAME UPDATED FOR 2026)
+        // TỰ ĐỘNG DÒ TÌM MODEL VÀ PHÂN TÍCH
         async function generateAI() {
-            const key = localStorage.getItem('hpi_gemini_key_v20');
-            if(!key) { toggleModal('api-modal'); return; }
+            const key = localStorage.getItem('hpi_gemini_key_v22');
+            if(!key) { 
+                toggleModal('api-modal'); 
+                return; 
+            }
 
-            document.getElementById('ai-loading').classList.remove('hidden');
+            const loadingScreen = document.getElementById('ai-loading');
+            const statusText = document.getElementById('ai-status-text');
+            const contentBox = document.getElementById('ai-content');
             
-            const stbData = activeSym === "STB" ? "Lưu ý nội bộ: LNST 2026 ước 8.100 tỷ, mục tiêu giá 70.000 VNĐ." : "";
-            const prompt = `Bạn là Chuyên gia SHS Analyst. Phân tích mã ${activeSym}. ${stbData} Yêu cầu: 1. Kỹ thuật (Wyckoff/Ichimoku), 2. Cơ bản (P/E, P/B, Tài sản), 3. Vùng mua mục tiêu. Trình bày Markdown chuyên nghiệp.`;
-
+            loadingScreen.classList.remove('hidden');
+            
             try {
-                // MODEL NAME: gemini-3-flash (Model chuẩn cho năm 2026)
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash:generateContent?key=${key}`, {
+                // BƯỚC 1: DÒ TÌM MODEL HỢP LỆ
+                statusText.innerText = "Đang tìm Model AI phù hợp...";
+                const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+                const listData = await listRes.json();
+                
+                if(listData.error) {
+                    throw new Error(`Lỗi xác thực Key: ${listData.error.message}`);
+                }
+
+                // Lọc ra các model có hỗ trợ tạo nội dung (generateContent)
+                const validModels = listData.models.filter(m => 
+                    m.supportedGenerationMethods && m.supportedGenerationMethods.includes("generateContent")
+                );
+
+                if(validModels.length === 0) {
+                    throw new Error("API Key của anh không được cấp quyền sử dụng bất kỳ Model nào.");
+                }
+
+                // Ưu tiên chọn dòng flash 1.5 mới nhất, nếu không có thì lấy cái đầu tiên
+                let selectedModelName = validModels[0].name; 
+                const preferredModel = validModels.find(m => m.name.includes("1.5-flash"));
+                if(preferredModel) {
+                    selectedModelName = preferredModel.name;
+                }
+
+                statusText.innerText = `Đã kết nối: ${selectedModelName.replace('models/', '')}...`;
+
+                // BƯỚC 2: GỬI LỆNH PHÂN TÍCH VÀO MODEL ĐÃ TÌM ĐƯỢC
+                const stbData = activeSym === "STB" ? "Lưu ý nội bộ: LNST 2026 ước xấp xỉ 8.100 tỷ, định giá năm 2026 là xấp xỉ 70.000 VNĐ." : "";
+                const prompt = `Bạn là Chuyên gia Phân tích Tài chính. Phân tích mã ${activeSym}. ${stbData} Yêu cầu: 1. Kỹ thuật (Wyckoff/Ichimoku), 2. Cơ bản (P/E, P/B, Tài sản), 3. Vùng mua mục tiêu. Trình bày Markdown ngắn gọn, sử dụng dấu phẩy (,) cho số thập phân.`;
+
+                // Đưa tên model lấy được vào URL để fetch
+                const aiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/${selectedModelName}:generateContent?key=${key}`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ contents: [{parts: [{text: prompt}]}] })
                 });
-                const d = await res.json();
-                if(d.error) throw new Error(d.error.message);
-                document.getElementById('ai-content').innerHTML = marked.parse(d.candidates[0].content.parts[0].text);
+                
+                const aiData = await aiRes.json();
+                
+                if(aiData.error) {
+                    throw new Error(aiData.error.message);
+                }
+                
+                contentBox.innerHTML = marked.parse(aiData.candidates[0].content.parts[0].text);
+                
             } catch(e) {
-                document.getElementById('ai-content').innerHTML = `<div class="p-4 bg-red-50 rounded-2xl text-red-600 text-[10px]">Lỗi hệ thống AI: ${e.message}</div>`;
-            } finally { document.getElementById('ai-loading').classList.add('hidden'); }
+                contentBox.innerHTML = `
+                    <div class="p-4 bg-red-50 rounded-2xl border border-red-200">
+                        <span class="text-red-600 text-[11px] font-black uppercase block mb-1">🚨 Lỗi Hệ Thống AI:</span>
+                        <span class="text-slate-600 text-[11px] font-mono block p-2 bg-white rounded">${e.message}</span>
+                        <p class="text-[10px] mt-2 text-slate-500">Hãy đảm bảo Key không có khoảng trắng hoặc tạo một Key mới trên Google AI Studio.</p>
+                    </div>`;
+            } finally { 
+                loadingScreen.classList.add('hidden'); 
+            }
         }
 
         function openChart(type) {
@@ -159,10 +207,14 @@
         }
 
         function toggleModal(id) { document.getElementById(id).classList.toggle('hidden'); }
+        
         function saveKeys() {
-            localStorage.setItem('hpi_gemini_key_v20', document.getElementById('gemini-key').value);
+            const keyInput = document.getElementById('gemini-key').value.trim();
+            localStorage.setItem('hpi_gemini_key_v22', keyInput);
             toggleModal('api-modal');
-            generateAI();
+            if(keyInput) {
+                generateAI();
+            }
         }
 
         function renderWatchlist() {
@@ -177,7 +229,7 @@
             const v = document.getElementById('search-input').value.toUpperCase().trim();
             if(v && !watchlist.includes(v)) {
                 watchlist.unshift(v);
-                localStorage.setItem('hpi_v20_wl', JSON.stringify(watchlist));
+                localStorage.setItem('hpi_v22_wl', JSON.stringify(watchlist));
                 renderWatchlist();
             }
             selectSym(v || activeSym);
@@ -196,7 +248,7 @@
         window.onload = () => {
             renderWatchlist();
             selectSym(activeSym);
-            document.getElementById('gemini-key').value = localStorage.getItem('hpi_gemini_key_v20') || "";
+            document.getElementById('gemini-key').value = localStorage.getItem('hpi_gemini_key_v22') || "";
         };
     </script>
 </body>
