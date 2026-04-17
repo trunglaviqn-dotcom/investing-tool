@@ -3,223 +3,291 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Henry Pro Invest - Professional Terminal</title>
+    <title>Henry Pro Invest - Premium Terminal</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #0a0e17; color: #edeff2; overflow: hidden; }
-        .glass-panel { background: rgba(21, 27, 40, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); }
-        .active-tab { border-bottom: 2px solid #3b82f6; color: #3b82f6; }
+        :root {
+            --primary-purple: #7c3aed;
+            --light-purple: #f5f3ff;
+            --border-color: #e5e7eb;
+        }
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: #f8fafc; 
+            color: #1e293b;
+            overflow: hidden;
+        }
+        .glass-panel { 
+            background: #ffffff; 
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
+        }
+        .active-tab { 
+            background-color: var(--primary-purple); 
+            color: white !important;
+        }
+        .watchlist-item:hover {
+            background-color: var(--light-purple);
+        }
+        .active-symbol {
+            border-left: 4px solid var(--primary-purple);
+            background-color: var(--light-purple);
+        }
         .scroll-hidden::-webkit-scrollbar { width: 4px; }
-        .scroll-hidden::-webkit-scrollbar-thumb { background: #2d3748; border-radius: 10px; }
-        .sidebar-title { font-size: 10px; font-weight: 800; letter-spacing: 0.1em; color: #718096; text-transform: uppercase; }
-        .metric-value { font-family: 'Monaco', monospace; font-weight: 600; }
+        .scroll-hidden::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
-<body class="h-screen flex flex-col p-2 gap-2">
+<body class="h-screen flex flex-col p-3 gap-3">
 
-    <header class="glass-panel px-6 py-3 rounded-xl flex justify-between items-center shrink-0">
-        <div class="flex items-center space-x-6">
-            <span class="text-2xl font-black tracking-tighter text-white">HENRY PRO <span class="text-blue-500">INVEST</span></span>
-            <div class="hidden md:flex items-center space-x-4">
-                <input type="text" id="search-input" placeholder="Thêm mã (VD: HUT)..." class="bg-slate-900 border border-slate-700 text-xs px-4 py-1.5 rounded-lg outline-none focus:border-blue-500 w-48 uppercase">
-                <button onclick="addToWatchlist()" class="text-blue-500 font-bold text-xs">+ THÊM</button>
+    <header class="glass-panel px-6 py-4 rounded-2xl flex justify-between items-center shrink-0">
+        <div class="flex items-center space-x-8">
+            <span class="text-2xl font-black tracking-tighter text-slate-900">
+                HENRY PRO <span class="text-[#7c3aed]">INVEST</span>
+            </span>
+            
+            <div class="relative flex items-center group">
+                <input type="text" id="search-input" placeholder="Thêm mã (VD: HUT, STB)..." 
+                    class="bg-slate-50 border border-slate-200 text-sm px-5 py-2 rounded-xl outline-none focus:border-[#7c3aed] focus:ring-2 focus:ring-purple-100 w-72 transition-all uppercase font-semibold">
+                <button onclick="addToWatchlist()" class="ml-3 bg-[#7c3aed] text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-purple-700 transition shadow-lg shadow-purple-200">
+                    + THÊM MÃ
+                </button>
             </div>
         </div>
-        <div class="flex items-center space-x-4">
-            <div id="market-status" class="flex items-center space-x-2 text-[10px] font-bold text-green-500 bg-green-500/10 px-3 py-1 rounded-full">
-                <span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span></span>
-                <span>DATA CONNECTED</span>
+
+        <div class="flex items-center space-x-6">
+            <div class="flex flex-col items-end">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Trạng thái hệ thống</span>
+                <span class="text-xs font-bold text-purple-600 flex items-center">
+                    <span class="h-2 w-2 bg-purple-600 rounded-full mr-2 animate-pulse"></span>
+                    TRADINGVIEW LIVE
+                </span>
             </div>
         </div>
     </header>
 
-    <main class="flex-1 grid grid-cols-12 gap-2 min-h-0">
+    <main class="flex-1 grid grid-cols-12 gap-3 min-h-0">
         
-        <aside class="col-span-12 md:col-span-2 glass-panel rounded-xl flex flex-col overflow-hidden">
-            <div class="p-3 border-b border-slate-800 flex justify-between items-center">
-                <span class="sidebar-title">Watchlist</span>
-                <span id="watchlist-count" class="text-[10px] bg-slate-800 px-2 py-0.5 rounded">0</span>
+        <aside class="col-span-2 glass-panel rounded-2xl flex flex-col overflow-hidden">
+            <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <span class="text-[11px] font-black text-slate-400 uppercase tracking-wider">Danh mục của anh</span>
+                <span id="wl-count" class="text-[10px] font-bold bg-white border px-2 py-0.5 rounded-full text-purple-600">0</span>
             </div>
-            <div id="watchlist-items" class="flex-1 overflow-y-auto scroll-hidden p-2 space-y-1">
+            <div id="watchlist-container" class="flex-1 overflow-y-auto scroll-hidden p-2 space-y-1">
                 </div>
         </aside>
 
-        <section class="col-span-12 md:col-span-7 glass-panel rounded-xl overflow-hidden relative">
-            <div id="tradingview_chart" class="h-full w-full"></div>
+        <section class="col-span-7 glass-panel rounded-2xl overflow-hidden relative shadow-sm">
+            <div id="tv_chart_main" class="h-full w-full"></div>
         </section>
 
-        <aside class="col-span-12 md:col-span-3 flex flex-col gap-2 overflow-hidden">
+        <aside class="col-span-3 flex flex-col gap-3 overflow-hidden">
             
-            <div class="glass-panel rounded-xl p-1 flex shrink-0">
-                <button onclick="switchTab('tech')" id="tab-tech" class="flex-1 py-2 text-xs font-bold active-tab">KỸ THUẬT (TA)</button>
-                <button onclick="switchTab('fund')" id="tab-fund" class="flex-1 py-2 text-xs font-bold text-slate-500">CƠ BẢN (FA)</button>
+            <div class="glass-panel rounded-2xl p-1.5 flex shrink-0 space-x-1">
+                <button onclick="setTab('tech')" id="btn-tech" class="flex-1 py-2.5 text-[11px] font-black rounded-xl active-tab transition-all">KỸ THUẬT (TA)</button>
+                <button onclick="setTab('fund')" id="btn-fund" class="flex-1 py-2.5 text-[11px] font-black rounded-xl text-slate-500 hover:bg-slate-50 transition-all">CƠ BẢN (FA)</button>
             </div>
 
-            <div id="analysis-content" class="glass-panel rounded-xl flex-1 overflow-y-auto scroll-hidden p-4">
+            <div id="analysis-box" class="glass-panel rounded-2xl flex-1 overflow-y-auto scroll-hidden p-5">
                 </div>
 
-            <div id="summary-panel" class="glass-panel rounded-xl p-4 border-t-2 border-green-500">
-                <div class="flex justify-between items-center">
-                    <span class="sidebar-title">Khuyến nghị Henry</span>
-                    <span class="bg-green-600 text-[10px] font-black px-2 py-0.5 rounded">STRONG BUY</span>
+            <div class="glass-panel rounded-2xl p-5 border-l-4 border-purple-500 bg-gradient-to-br from-white to-purple-50/30">
+                <div class="flex justify-between items-start mb-3">
+                    <span class="text-[10px] font-black text-purple-400 uppercase tracking-widest">Hệ thống khuyến nghị</span>
+                    <span id="rec-label" class="text-[10px] font-black px-2 py-1 rounded bg-purple-600 text-white">---</span>
                 </div>
-                <div class="mt-2 text-lg font-bold text-white tracking-tight">VÙNG MUA: <span id="buy-zone">---</span></div>
+                <div class="text-xs font-semibold text-slate-500 mb-1">Vùng mua mục tiêu:</div>
+                <div id="buy-zone" class="text-2xl font-black text-slate-900 tracking-tighter">---</div>
             </div>
         </aside>
     </main>
 
     <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <script>
-        // --- 1. QUẢN LÝ DỮ LIỆU ---
-        let watchlist = JSON.parse(localStorage.getItem('henry_watchlist')) || ["HOSE:HUT", "HOSE:STB", "HOSE:VIX"];
-        let activeSymbol = "HOSE:HUT";
+        // 1. DATA & LOCALSTORAGE
+        let symbols = JSON.parse(localStorage.getItem('henry_v10_wl')) || ["HOSE:HUT", "HOSE:STB", "HOSE:VIX"];
+        let activeSym = symbols[0];
+        let currentTab = 'tech';
 
-        // Dữ liệu Phân tích (Simulated AI Analysis based on your expert criteria)
-        const ANALYSIS_DB = {
+        const ANALYTICS = {
             "HOSE:HUT": {
                 ta: {
-                    wyckoff: "Pha D (Markup). SOS (Sign of Strength) xuất hiện tại nến rút chân 16.5.",
-                    ichimoku: "Giá nằm trên mây Kumo xanh, Tenkan cắt lên Kijun -> Xu hướng tăng mạnh.",
-                    macd: "MACD cắt lên đường Signal, histogram dương mở rộng.",
-                    short: "Tăng lên 18,50", mid: "22,00", long: "28,50"
+                    wyckoff: "Pha D (Markup). Dòng tiền thông minh bắt đầu đẩy giá khỏi vùng nền tích lũy 16,5 - 17,2. SOS xuất hiện rõ nét.",
+                    ichimoku: "Giá nằm trên mây Kumo tím. Tenkan-sen cắt lên Kijun-sen xác nhận xu hướng tăng ngắn hạn.",
+                    macd: "MACD duy trì phân kỳ dương. RSI ổn định ở ngưỡng 58,2 (vùng tích lũy tích cực).",
+                    targets: ["18,50", "22,00", "28,50"],
+                    rec: "STRONG BUY"
                 },
                 fa: {
-                    valuation: "P/B 1.2x (Rẻ so với trung bình ngành Hạ tầng 1.8x).",
-                    cashflow: "CFO dương mạnh từ mảng VETC, đảm bảo trả nợ BOT.",
-                    assets: "Sở hữu hệ thống thu phí không dừng lớn nhất VN. Quỹ đất dự án khủng.",
-                    competitors: "CII, HHV (HUT vượt trội về thị phần thanh toán không tiền mặt).",
-                    decision: "ĐỊNH GIÁ RẺ. Khuyến nghị Mua tích lũy vùng 16.5 - 17.0."
+                    valuation: "P/B hiện tại 1,2x - Thấp hơn trung bình ngành (1,8x). Định giá kỳ vọng 2026 quanh 70k VND.",
+                    cashflow: "CFO dương mạnh nhờ độc quyền thu phí không dừng VETC. Sức khỏe tài chính cải thiện sau tái cấu trúc.",
+                    assets: "Sở hữu hệ sinh thái hạ tầng giao thông số 1 VN. Quỹ đất dự án béo bở.",
+                    competitors: "CII, HHV (HUT có lợi thế tuyệt đối về dòng tiền từ mảng dịch vụ số).",
+                    status: "ĐỊNH GIÁ RẺ",
+                    buy: "16,5 - 17,2"
                 }
             },
             "HOSE:STB": {
                 ta: {
-                    wyckoff: "Pha E. Đang trong giai đoạn bứt phá đỉnh lịch sử.",
-                    ichimoku: "Giá bám dải trên mây, Chikou Span không có vật cản.",
-                    macd: "Đang ở vùng quá mua nhưng chưa có tín hiệu phân kỳ âm.",
-                    short: "36,00", mid: "45,00", long: "70,00"
+                    wyckoff: "Pha E. Giai đoạn bứt tốc mạnh mẽ (Sign of Strength). Áp lực bán tại đỉnh cũ không đáng kể.",
+                    ichimoku: "Giá bám dải trên mây, Chikou Span không có vật cản phía trước.",
+                    macd: "Histogram mở rộng biên độ. Xu hướng tăng cực đại.",
+                    targets: ["36,80", "42,00", "70,00"],
+                    rec: "HOLD / BUY +"
                 },
                 fa: {
-                    valuation: "Định giá 2026 dựa trên LNST 8.100 tỷ -> P/E kỳ vọng thấp.",
-                    cashflow: "Dòng tiền từ xử lý nợ xấu VAMC về cực lớn.",
-                    assets: "Chất lượng tài sản cải thiện rõ rệt, tỷ lệ nợ xấu < 1%.",
-                    competitors: "ACB, MBB (STB có game riêng về đấu giá cổ phần).",
-                    decision: "HÀNG CHIẾN LƯỢC. Tầm nhìn 2026 giá 70.x."
+                    valuation: "LNST 2026 dự kiến xấp xỉ 8.100 tỷ. Định giá cực kỳ hấp dẫn khi hoàn tất xử lý nợ xấu VAMC.",
+                    cashflow: "Dòng tiền từ hoạt động tín dụng tăng trưởng 15% YoY.",
+                    assets: "Tài sản ròng sạch nhất trong nhóm Ngân hàng TMCP sau tái cơ cấu.",
+                    competitors: "ACB, MBB (STB có câu chuyện đấu giá cổ phần riêng biệt).",
+                    status: "HÀNG CHIẾN LƯỢC",
+                    buy: "31,0 - 32,5"
                 }
             }
         };
 
-        // --- 2. TRADINGVIEW CHART ENGINE ---
-        function initChart(symbol) {
+        // 2. TRADINGVIEW INTEGRATION
+        function initMainChart(sym) {
             new TradingView.widget({
                 "autosize": true,
-                "symbol": symbol,
+                "symbol": sym,
                 "interval": "D",
                 "timezone": "Asia/Ho_Chi_Minh",
-                "theme": "dark",
+                "theme": "light",
                 "style": "1",
                 "locale": "vi",
-                "toolbar_bg": "#f1f3f6",
+                "toolbar_bg": "#f8fafc",
                 "enable_publishing": false,
                 "withdateranges": true,
-                "hide_side_toolbar": false, // Cho phép vẽ
+                "hide_side_toolbar": false, // Để anh có thể vẽ chart
                 "allow_symbol_change": true,
                 "save_image": true,
-                "container_id": "tradingview_chart"
+                "container_id": "tv_chart_main",
+                "studies": [
+                    "RSI@tv-basicstudies",
+                    "MACD@tv-basicstudies",
+                    "StochasticRSI@tv-basicstudies"
+                ]
             });
-            updateAnalysisUI(symbol);
+            updateAnalysisUI(sym);
         }
 
-        // --- 3. UI LOGIC & WATCHLIST ---
+        // 3. WATCHLIST & SEARCH LOGIC
         function renderWatchlist() {
-            const container = document.getElementById('watchlist-items');
+            const container = document.getElementById('watchlist-container');
             container.innerHTML = '';
-            watchlist.forEach(sym => {
-                const cleanSym = sym.split(':')[1];
-                const activeClass = sym === activeSymbol ? 'bg-blue-600/20 border-blue-500/50' : 'bg-slate-900/50 border-transparent';
+            symbols.forEach(s => {
+                const isActive = s === activeSym ? 'active-symbol' : '';
+                const code = s.split(':')[1];
                 container.innerHTML += `
-                    <div onclick="changeActiveSymbol('${sym}')" class="flex justify-between items-center p-3 rounded-lg border cursor-pointer transition ${activeClass}">
-                        <span class="font-bold text-sm">${cleanSym}</span>
-                        <button onclick="removeFromWatchlist(event, '${sym}')" class="text-slate-600 hover:text-red-500">×</button>
+                    <div onclick="selectSym('${s}')" class="watchlist-item p-4 rounded-xl flex justify-between items-center cursor-pointer transition-all border border-transparent mb-1 ${isActive}">
+                        <span class="font-extrabold text-sm text-slate-700">${code}</span>
+                        <button onclick="removeSym(event, '${s}')" class="text-slate-300 hover:text-red-500 font-bold">×</button>
                     </div>
                 `;
             });
-            document.getElementById('watchlist-count').innerText = watchlist.length;
+            document.getElementById('wl-count').innerText = symbols.length;
         }
 
         function addToWatchlist() {
-            const input = document.getElementById('search-input');
-            const sym = "HOSE:" + input.value.trim().toUpperCase();
-            if (sym && !watchlist.includes(sym)) {
-                watchlist.push(sym);
-                localStorage.setItem('henry_watchlist', JSON.stringify(watchlist));
+            const val = document.getElementById('search-input').value.trim().toUpperCase();
+            if (!val) return;
+            const fullCode = val.includes(':') ? val : `HOSE:${val}`;
+            if (!symbols.includes(fullCode)) {
+                symbols.push(fullCode);
+                localStorage.setItem('henry_v10_wl', JSON.stringify(symbols));
                 renderWatchlist();
             }
-            input.value = '';
+            document.getElementById('search-input').value = '';
+            selectSym(fullCode);
         }
 
-        function removeFromWatchlist(e, sym) {
+        function removeSym(e, s) {
             e.stopPropagation();
-            watchlist = watchlist.filter(s => s !== sym);
-            localStorage.setItem('henry_watchlist', JSON.stringify(watchlist));
+            symbols = symbols.filter(item => item !== s);
+            localStorage.setItem('henry_v10_wl', JSON.stringify(symbols));
             renderWatchlist();
         }
 
-        function changeActiveSymbol(sym) {
-            activeSymbol = sym;
-            initChart(sym);
+        function selectSym(s) {
+            activeSym = s;
+            initMainChart(s);
             renderWatchlist();
         }
 
-        // --- 4. PHÂN TÍCH (TECH & FUND) ---
-        let currentTab = 'tech';
-        function switchTab(tab) {
-            currentTab = tab;
-            document.getElementById('tab-tech').className = tab === 'tech' ? 'flex-1 py-2 text-xs font-bold active-tab' : 'flex-1 py-2 text-xs font-bold text-slate-500';
-            document.getElementById('tab-fund').className = tab === 'fund' ? 'flex-1 py-2 text-xs font-bold active-tab' : 'flex-1 py-2 text-xs font-bold text-slate-500';
-            updateAnalysisUI(activeSymbol);
+        // 4. ANALYSIS UPDATE
+        function setTab(t) {
+            currentTab = t;
+            document.getElementById('btn-tech').className = t === 'tech' ? 'flex-1 py-2.5 text-[11px] font-black rounded-xl active-tab transition-all' : 'flex-1 py-2.5 text-[11px] font-black rounded-xl text-slate-500 hover:bg-slate-50 transition-all';
+            document.getElementById('btn-fund').className = t === 'fund' ? 'flex-1 py-2.5 text-[11px] font-black rounded-xl active-tab transition-all' : 'flex-1 py-2.5 text-[11px] font-black rounded-xl text-slate-500 hover:bg-slate-50 transition-all';
+            updateAnalysisUI(activeSym);
         }
 
         function updateAnalysisUI(sym) {
-            const data = ANALYSIS_DB[sym] || { ta: {wyckoff:"N/A", ichimoku:"N/A", macd:"N/A", short:"N/A", mid:"N/A", long:"N/A"}, fa: {valuation:"N/A", cashflow:"N/A", assets:"N/A", competitors:"N/A", decision:"Chưa có dữ liệu"} };
-            const content = document.getElementById('analysis-content');
+            const data = ANALYTICS[sym] || ANALYTICS["HOSE:HUT"];
+            const box = document.getElementById('analysis-box');
             
             if (currentTab === 'tech') {
-                content.innerHTML = `
-                    <div class="space-y-4">
-                        <div><span class="sidebar-title">Wyckoff/VSA</span><p class="text-xs text-blue-300 mt-1">${data.ta.wyckoff}</p></div>
-                        <div><span class="sidebar-title">Ichimoku Cloud</span><p class="text-xs text-blue-300 mt-1">${data.ta.ichimoku}</p></div>
-                        <div><span class="sidebar-title">MACD Momentum</span><p class="text-xs text-blue-300 mt-1">${data.ta.macd}</p></div>
-                        <div class="pt-4 border-t border-slate-800">
-                            <span class="sidebar-title">Tầm nhìn Mục tiêu</span>
-                            <div class="grid grid-cols-3 gap-2 mt-2">
-                                <div class="bg-slate-900 p-2 rounded text-center"><span class="block text-[8px] text-slate-500">NGẮN</span><span class="text-xs font-bold text-green-400">${data.ta.short}</span></div>
-                                <div class="bg-slate-900 p-2 rounded text-center"><span class="block text-[8px] text-slate-500">TRUNG</span><span class="text-xs font-bold text-green-400">${data.ta.mid}</span></div>
-                                <div class="bg-slate-900 p-2 rounded text-center"><span class="block text-[8px] text-slate-500">DÀI</span><span class="text-xs font-bold text-green-400">${data.ta.long}</span></div>
+                box.innerHTML = `
+                    <div class="space-y-5">
+                        <section>
+                            <h4 class="text-[10px] font-black text-purple-500 uppercase mb-2">Wyckoff / Dòng tiền</h4>
+                            <p class="text-xs leading-relaxed text-slate-600 font-medium">${data.ta.wyckoff}</p>
+                        </section>
+                        <section>
+                            <h4 class="text-[10px] font-black text-purple-500 uppercase mb-2">Ichimoku Cloud</h4>
+                            <p class="text-xs leading-relaxed text-slate-600 font-medium">${data.ta.ichimoku}</p>
+                        </section>
+                        <section>
+                            <h4 class="text-[10px] font-black text-purple-500 uppercase mb-2">Động lượng MACD/RSI</h4>
+                            <p class="text-xs leading-relaxed text-slate-600 font-medium">${data.ta.macd}</p>
+                        </section>
+                        <div class="grid grid-cols-3 gap-2 pt-4 border-t border-slate-100">
+                            <div class="text-center bg-slate-50 p-2 rounded-lg">
+                                <span class="block text-[8px] font-bold text-slate-400">T+</span>
+                                <span class="text-xs font-black text-purple-600">${data.ta.targets[0]}</span>
+                            </div>
+                            <div class="text-center bg-slate-50 p-2 rounded-lg">
+                                <span class="block text-[8px] font-bold text-slate-400">TRUNG</span>
+                                <span class="text-xs font-black text-purple-600">${data.ta.targets[1]}</span>
+                            </div>
+                            <div class="text-center bg-slate-50 p-2 rounded-lg">
+                                <span class="block text-[8px] font-bold text-slate-400">DÀI</span>
+                                <span class="text-xs font-black text-purple-600">${data.ta.targets[2]}</span>
                             </div>
                         </div>
                     </div>
                 `;
             } else {
-                content.innerHTML = `
-                    <div class="space-y-4">
-                        <div><span class="sidebar-title">Định giá & Tài sản</span><p class="text-xs text-slate-300 mt-1">${data.fa.valuation} <br> ${data.fa.assets}</p></div>
-                        <div><span class="sidebar-title">Cash Flow (CFO)</span><p class="text-xs text-slate-300 mt-1">${data.fa.cashflow}</p></div>
-                        <div><span class="sidebar-title">Đối thủ cạnh tranh</span><p class="text-xs text-slate-300 mt-1">${data.fa.competitors}</p></div>
-                        <div class="bg-blue-600/10 p-3 rounded-lg border border-blue-500/20 mt-4">
-                            <span class="sidebar-title text-blue-400">Kết luận FA</span>
-                            <p class="text-xs text-blue-100 mt-1">${data.fa.decision}</p>
+                box.innerHTML = `
+                    <div class="space-y-5">
+                        <section>
+                            <h4 class="text-[10px] font-black text-blue-500 uppercase mb-2">Định giá & Dòng tiền</h4>
+                            <p class="text-xs leading-relaxed text-slate-600 font-medium">${data.fa.valuation} <br> ${data.fa.cashflow}</p>
+                        </section>
+                        <section>
+                            <h4 class="text-[10px] font-black text-blue-500 uppercase mb-2">Chất lượng tài sản</h4>
+                            <p class="text-xs leading-relaxed text-slate-600 font-medium">${data.fa.assets}</p>
+                        </section>
+                        <section>
+                            <h4 class="text-[10px] font-black text-blue-500 uppercase mb-2">Đối thủ & Ngành</h4>
+                            <p class="text-xs leading-relaxed text-slate-600 font-medium">${data.fa.competitors}</p>
+                        </section>
+                        <div class="bg-blue-50 p-3 rounded-xl border border-blue-100">
+                            <span class="text-[10px] font-black text-blue-600 block mb-1 uppercase">Kết luận định giá</span>
+                            <span class="text-xs font-bold text-blue-900">${data.fa.status}</span>
                         </div>
                     </div>
                 `;
             }
-            document.getElementById('buy-zone').innerText = sym === "HOSE:HUT" ? "16,5 - 17,2" : "31,0 - 32,5";
+            document.getElementById('rec-label').innerText = data.ta.rec;
+            document.getElementById('buy-zone').innerText = data.fa.buy;
         }
 
-        // KHỞI ĐỘNG
+        // INIT
         window.onload = () => {
             renderWatchlist();
-            initChart(activeSymbol);
+            initMainChart(activeSym);
         };
     </script>
 </body>
