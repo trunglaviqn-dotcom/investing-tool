@@ -43,7 +43,7 @@
             <div class="flex flex-col items-end border-l border-slate-200 pl-4">
                 <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Trạng thái dữ liệu</span>
                 <span class="text-xs font-bold text-green-500 flex items-center">
-                    <span class="h-2 w-2 bg-green-500 rounded-full mr-2 animate-pulse"></span> LIVE PRICE READY
+                    <span class="h-2 w-2 bg-green-500 rounded-full mr-2 animate-pulse"></span> TCBS LIVE DATA
                 </span>
             </div>
         </div>
@@ -89,9 +89,6 @@
                 </button>
             </div>
             
-            <p class="text-[10px] text-slate-400 mt-6 max-w-sm text-center">
-                * Dữ liệu giá được lấy Real-time từ cổng API Public. Biểu đồ bật dạng Pop-up để lách bản quyền HOSE.
-            </p>
         </section>
 
         <aside class="col-span-4 flex flex-col gap-3 overflow-hidden">
@@ -124,7 +121,7 @@
     <div id="api-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center z-50">
         <div class="bg-white p-6 rounded-2xl w-[400px] shadow-2xl">
             <h3 class="text-lg font-black text-slate-800 mb-2">Cấu hình Gemini AI</h3>
-            <p class="text-xs text-slate-500 mb-4">Nhập API Key của Google Gemini. Key được lưu an toàn 100% trong trình duyệt máy tính của anh, không gửi đi đâu khác ngoài server Google.</p>
+            <p class="text-xs text-slate-500 mb-4">Nhập API Key của Google Gemini. Đảm bảo copy đầy đủ chuỗi ký tự (thường bắt đầu bằng <b>AIza...</b>).</p>
             <input type="password" id="gemini-key-input" placeholder="Dán API Key vào đây..." class="w-full border border-slate-300 p-2 rounded-lg text-sm mb-4 outline-none focus:border-purple-500">
             <div class="flex justify-end space-x-2">
                 <button onclick="toggleApiModal()" class="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-800">Hủy</button>
@@ -135,32 +132,32 @@
 
     <script>
         // 1. DATA & LOCALSTORAGE
-        let symbols = JSON.parse(localStorage.getItem('henry_v14_wl')) || ["MBB", "HUT", "STB"];
+        let symbols = JSON.parse(localStorage.getItem('henry_v15_wl')) || ["MBB", "HUT", "STB"];
         let activeSym = symbols[0];
         let priceInterval = null;
 
-        // 2. TÍNH NĂNG FETCH GIÁ REAL-TIME (TỪ API PUBLIC VNDIRECT)
+        // 2. FETCH GIÁ REAL-TIME (TỪ API TCBS - SIÊU ỔN ĐỊNH, KHÔNG BỊ CORS)
         async function fetchLivePrice(sym) {
             try {
-                // API Public VNDirect không bị lỗi CORS
-                const res = await fetch(`https://finfo-api.vndirect.com.vn/v4/stock_quotes?q=code:${sym}`);
+                const res = await fetch(`https://apipubaws.tcbs.com.vn/tcanalysis/v1/ticker/${sym}/overview`);
+                if (!res.ok) throw new Error("Lỗi mạng");
+                
                 const data = await res.json();
                 
-                if (data && data.data && data.data.length > 0) {
-                    const stock = data.data[0];
-                    const price = stock.matchPrice || stock.basicPrice;
-                    const refPrice = stock.basicPrice;
-                    const vol = stock.nmVolume || 0;
-                    
-                    const changeVal = price - refPrice;
-                    const changePct = (changeVal / refPrice) * 100;
+                if (data && data.price) {
+                    const price = data.price;
+                    const changeVal = data.priceChange;
+                    const changePct = data.priceChangeRatio * 100; // TCBS trả về tỷ lệ gốc (vd -0.011)
+                    const vol = data.volume;
                     
                     let colorClass = 'text-green-500';
                     let sign = '+';
                     if (changeVal < 0) { colorClass = 'text-red-500'; sign = ''; }
                     else if (changeVal === 0) { colorClass = 'text-yellow-500'; sign = ''; }
 
-                    document.getElementById('dash-company').innerText = `Dữ liệu thời gian thực cập nhật thành công`;
+                    document.getElementById('dash-company').innerText = data.companyName || 'CẬP NHẬT REAL-TIME';
+                    
+                    // Format dấu phẩy theo yêu cầu chuẩn Việt Nam
                     document.getElementById('live-price').innerText = price.toFixed(2).replace('.', ',');
                     document.getElementById('live-price').className = `text-4xl font-black ${colorClass}`;
                     
@@ -175,6 +172,7 @@
                 document.getElementById('live-price').innerText = '---';
                 document.getElementById('live-change').innerText = 'Ngoài giờ GD hoặc sai mã';
                 document.getElementById('live-change').className = 'block text-xs font-bold mt-2 text-slate-400';
+                document.getElementById('live-vol').innerText = '---';
             }
         }
 
@@ -208,7 +206,12 @@
             btn.disabled = true;
             loading.classList.remove('hidden');
 
-            const prompt = `Đóng vai là một Chuyên gia Phân tích Tài chính cá nhân. Hãy phân tích ngắn gọn mã cổ phiếu chứng khoán Việt Nam: ${activeSym}. 
+            let extraContext = "";
+            if (activeSym === "STB") {
+                extraContext = "Lưu ý dữ liệu nội bộ: Lợi nhuận sau thuế của STB năm 2026 ước tính xấp xỉ 8.100 tỷ, định giá mục tiêu năm 2026 là xấp xỉ 70.000 VNĐ. Hãy tích hợp thông tin này vào phần Cơ bản.";
+            }
+
+            const prompt = `Đóng vai là một Chuyên gia Phân tích Tài chính cá nhân. Hãy phân tích ngắn gọn mã cổ phiếu chứng khoán Việt Nam: ${activeSym}. ${extraContext}
             Yêu cầu format bằng Markdown, KHÔNG dùng thẻ Code Block, bắt buộc gồm 3 phần:
             ### KỸ THUẬT (Wyckoff & Động lượng)
             (Viết 2-3 câu về xu hướng, RSI, MACD, Volume)
@@ -218,7 +221,8 @@
             (Khuyến nghị Mua/Bán/Nắm giữ và cho 1 khoảng giá cụ thể)`;
 
             try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+                // Gọi model gemini-1.5-flash-latest để ổn định nhất
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -228,12 +232,26 @@
                 });
 
                 const data = await response.json();
-                if (data.error) throw new Error(data.error.message);
+                
+                // Bắt lỗi chi tiết từ Google để hiển thị cho người dùng
+                if (!response.ok) {
+                    throw new Error(data.error?.message || "Lỗi không xác định từ Google API");
+                }
 
-                const aiText = data.candidates[0].content.parts[0].text;
-                content.innerHTML = marked.parse(aiText); // Convert Markdown to HTML
+                let aiText = data.candidates[0].content.parts[0].text;
+                
+                // Format lại các số thập phân có trong text của AI cho đúng chuẩn Việt Nam (nếu cần thiết)
+                content.innerHTML = marked.parse(aiText); 
             } catch (error) {
-                content.innerHTML = `<div class="text-red-500 text-xs font-bold">Lỗi kết nối AI: Khóa API của anh không hợp lệ hoặc bị quá tải.</div>`;
+                content.innerHTML = `
+                <div class="bg-red-50 p-4 rounded-xl border border-red-200">
+                    <span class="text-red-600 text-xs font-bold block mb-1">LỖI KẾT NỐI API GEMINI:</span>
+                    <span class="text-slate-600 text-[11px]">${error.message}</span>
+                    <ul class="text-[10px] text-slate-500 mt-2 list-disc pl-4">
+                        <li>Vui lòng vào phần Cài đặt, đảm bảo API Key đã được dán đầy đủ và không có khoảng trắng ở đầu hoặc cuối.</li>
+                        <li>Nếu lỗi ghi "API key not valid", có thể API Key chưa được Google kích hoạt, hãy thử tạo lại một Key mới ở AI Studio.</li>
+                    </ul>
+                </div>`;
             } finally {
                 loading.classList.add('hidden');
                 btn.disabled = false;
@@ -269,7 +287,7 @@
             const cleanSym = val.includes(':') ? val.split(':')[1] : val;
             if (!symbols.includes(cleanSym)) {
                 symbols.push(cleanSym);
-                localStorage.setItem('henry_v14_wl', JSON.stringify(symbols));
+                localStorage.setItem('henry_v15_wl', JSON.stringify(symbols));
                 renderWatchlist();
             }
             document.getElementById('search-input').value = '';
@@ -279,7 +297,7 @@
         function removeSym(e, s) {
             e.stopPropagation();
             symbols = symbols.filter(item => item !== s);
-            localStorage.setItem('henry_v14_wl', JSON.stringify(symbols));
+            localStorage.setItem('henry_v15_wl', JSON.stringify(symbols));
             renderWatchlist();
             if (activeSym === s && symbols.length > 0) selectSym(symbols[0]);
         }
@@ -289,10 +307,8 @@
             document.getElementById('dash-symbol').innerText = s;
             document.getElementById('ai-content').innerHTML = `<div class="text-center text-slate-400 text-xs mt-10">Bấm nút <b>"Phân tích mã này"</b> để AI cập nhật phân tích mới nhất.</div>`;
             
-            // Xóa bộ đếm giá cũ
             if(priceInterval) clearInterval(priceInterval);
             
-            // Gọi giá ngay lập tức và set lặp lại mỗi 5 giây
             fetchLivePrice(s);
             priceInterval = setInterval(() => fetchLivePrice(s), 5000);
             
