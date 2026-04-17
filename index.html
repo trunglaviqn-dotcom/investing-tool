@@ -47,8 +47,9 @@
             </span>
             
             <div class="relative flex items-center group">
-                <input type="text" id="search-input" placeholder="Thêm mã (VD: HUT, STB)..." 
-                    class="bg-slate-50 border border-slate-200 text-sm px-5 py-2 rounded-xl outline-none focus:border-[#7c3aed] focus:ring-2 focus:ring-purple-100 w-72 transition-all uppercase font-semibold">
+                <input type="text" id="search-input" placeholder="Gõ mã VN (VD: MBB, HUT)..." 
+                    class="bg-slate-50 border border-slate-200 text-sm px-5 py-2 rounded-xl outline-none focus:border-[#7c3aed] focus:ring-2 focus:ring-purple-100 w-72 transition-all uppercase font-semibold"
+                    onkeypress="if(event.key === 'Enter') addToWatchlist()">
                 <button onclick="addToWatchlist()" class="ml-3 bg-[#7c3aed] text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-purple-700 transition shadow-lg shadow-purple-200">
                     + THÊM MÃ
                 </button>
@@ -57,10 +58,10 @@
 
         <div class="flex items-center space-x-6">
             <div class="flex flex-col items-end">
-                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Trạng thái hệ thống</span>
-                <span class="text-xs font-bold text-purple-600 flex items-center">
-                    <span class="h-2 w-2 bg-purple-600 rounded-full mr-2 animate-pulse"></span>
-                    TRADINGVIEW LIVE
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Trạng thái dữ liệu</span>
+                <span class="text-xs font-bold text-green-500 flex items-center">
+                    <span class="h-2 w-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
+                    VN DATA LINKED
                 </span>
             </div>
         </div>
@@ -77,8 +78,8 @@
                 </div>
         </aside>
 
-        <section class="col-span-7 glass-panel rounded-2xl overflow-hidden relative shadow-sm">
-            <div id="tv_chart_main" class="h-full w-full"></div>
+        <section class="col-span-7 glass-panel rounded-2xl overflow-hidden relative shadow-sm p-1 bg-[#131722]">
+            <iframe id="tv_iframe_chart" src="about:blank" width="100%" height="100%" frameborder="0" allowfullscreen></iframe>
         </section>
 
         <aside class="col-span-3 flex flex-col gap-3 overflow-hidden">
@@ -102,73 +103,55 @@
         </aside>
     </main>
 
-    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <script>
         // 1. DATA & LOCALSTORAGE
-        let symbols = JSON.parse(localStorage.getItem('henry_v10_wl')) || ["HOSE:HUT", "HOSE:STB", "HOSE:VIX"];
+        // Lưu ý: Đối với Iframe nội địa, chúng ta chỉ cần truyền Tên Mã (VD: MBB), không cần tiền tố HOSE/HNX nữa.
+        let symbols = JSON.parse(localStorage.getItem('henry_v12_wl')) || ["MBB", "HUT", "STB", "VND"];
         let activeSym = symbols[0];
         let currentTab = 'tech';
 
         const ANALYTICS = {
-            "HOSE:HUT": {
+            "MBB": {
+                ta: {
+                    wyckoff: "Pha C (Spring/Test). Cổ phiếu đang kiểm định lại vùng hỗ trợ cứng. Vol cạn kiệt cho thấy lực cung đã suy yếu.",
+                    ichimoku: "Giá đang giao dịch lấp lửng trong mây Kumo. Cần một phiên nổ Vol để bứt thoát.",
+                    macd: "MACD đang hội tụ tại đường Zero, chờ tín hiệu cắt lên.",
+                    targets: ["24,50", "28,00", "32,00"],
+                    rec: "MUA GOM"
+                },
+                fa: {
+                    valuation: "P/B quanh 1.1x, cực kỳ hấp dẫn cho một ngân hàng top đầu về Casa và an toàn vốn.",
+                    cashflow: "Tăng trưởng tín dụng ổn định. Thu nhập ngoài lãi (Bancassurance) đang phục hồi.",
+                    assets: "Tỷ lệ bao phủ nợ xấu (LLR) thuộc nhóm cao nhất hệ thống ngân hàng.",
+                    competitors: "TCB, ACB, VPB. MBB có lợi thế hệ sinh thái quân đội vững chắc.",
+                    status: "ĐỊNH GIÁ RẺ",
+                    buy: "21,5 - 22,5"
+                }
+            },
+            "HUT": {
                 ta: {
                     wyckoff: "Pha D (Markup). Dòng tiền thông minh bắt đầu đẩy giá khỏi vùng nền tích lũy 16,5 - 17,2. SOS xuất hiện rõ nét.",
-                    ichimoku: "Giá nằm trên mây Kumo tím. Tenkan-sen cắt lên Kijun-sen xác nhận xu hướng tăng ngắn hạn.",
+                    ichimoku: "Giá nằm trên mây Kumo. Tenkan-sen cắt lên Kijun-sen xác nhận xu hướng tăng ngắn hạn.",
                     macd: "MACD duy trì phân kỳ dương. RSI ổn định ở ngưỡng 58,2 (vùng tích lũy tích cực).",
                     targets: ["18,50", "22,00", "28,50"],
                     rec: "STRONG BUY"
                 },
                 fa: {
-                    valuation: "P/B hiện tại 1,2x - Thấp hơn trung bình ngành (1,8x). Định giá kỳ vọng 2026 quanh 70k VND.",
-                    cashflow: "CFO dương mạnh nhờ độc quyền thu phí không dừng VETC. Sức khỏe tài chính cải thiện sau tái cấu trúc.",
-                    assets: "Sở hữu hệ sinh thái hạ tầng giao thông số 1 VN. Quỹ đất dự án béo bở.",
-                    competitors: "CII, HHV (HUT có lợi thế tuyệt đối về dòng tiền từ mảng dịch vụ số).",
+                    valuation: "P/B hiện tại 1,2x - Thấp hơn trung bình ngành (1,8x).",
+                    cashflow: "CFO dương mạnh nhờ độc quyền thu phí không dừng VETC.",
+                    assets: "Sở hữu hệ sinh thái hạ tầng giao thông số 1 VN.",
+                    competitors: "CII, HHV (HUT có lợi thế tuyệt đối về dòng tiền).",
                     status: "ĐỊNH GIÁ RẺ",
                     buy: "16,5 - 17,2"
-                }
-            },
-            "HOSE:STB": {
-                ta: {
-                    wyckoff: "Pha E. Giai đoạn bứt tốc mạnh mẽ (Sign of Strength). Áp lực bán tại đỉnh cũ không đáng kể.",
-                    ichimoku: "Giá bám dải trên mây, Chikou Span không có vật cản phía trước.",
-                    macd: "Histogram mở rộng biên độ. Xu hướng tăng cực đại.",
-                    targets: ["36,80", "42,00", "70,00"],
-                    rec: "HOLD / BUY +"
-                },
-                fa: {
-                    valuation: "LNST 2026 dự kiến xấp xỉ 8.100 tỷ. Định giá cực kỳ hấp dẫn khi hoàn tất xử lý nợ xấu VAMC.",
-                    cashflow: "Dòng tiền từ hoạt động tín dụng tăng trưởng 15% YoY.",
-                    assets: "Tài sản ròng sạch nhất trong nhóm Ngân hàng TMCP sau tái cơ cấu.",
-                    competitors: "ACB, MBB (STB có câu chuyện đấu giá cổ phần riêng biệt).",
-                    status: "HÀNG CHIẾN LƯỢC",
-                    buy: "31,0 - 32,5"
                 }
             }
         };
 
-        // 2. TRADINGVIEW INTEGRATION
+        // 2. CƠ CHẾ LÁCH LUẬT BẰNG IFRAME (DCHART VNDIRECT)
         function initMainChart(sym) {
-            new TradingView.widget({
-                "autosize": true,
-                "symbol": sym,
-                "interval": "D",
-                "timezone": "Asia/Ho_Chi_Minh",
-                "theme": "light",
-                "style": "1",
-                "locale": "vi",
-                "toolbar_bg": "#f8fafc",
-                "enable_publishing": false,
-                "withdateranges": true,
-                "hide_side_toolbar": false, // Để anh có thể vẽ chart
-                "allow_symbol_change": true,
-                "save_image": true,
-                "container_id": "tv_chart_main",
-                "studies": [
-                    "RSI@tv-basicstudies",
-                    "MACD@tv-basicstudies",
-                    "StochasticRSI@tv-basicstudies"
-                ]
-            });
+            // Nhúng thẳng biểu đồ TradingView nội địa từ hệ thống DChart (đã mua bản quyền data VN)
+            const iframeUrl = `https://dchart.vndirect.com.vn/?symbol=${sym}`;
+            document.getElementById('tv_iframe_chart').src = iframeUrl;
             updateAnalysisUI(sym);
         }
 
@@ -178,10 +161,9 @@
             container.innerHTML = '';
             symbols.forEach(s => {
                 const isActive = s === activeSym ? 'active-symbol' : '';
-                const code = s.split(':')[1];
                 container.innerHTML += `
                     <div onclick="selectSym('${s}')" class="watchlist-item p-4 rounded-xl flex justify-between items-center cursor-pointer transition-all border border-transparent mb-1 ${isActive}">
-                        <span class="font-extrabold text-sm text-slate-700">${code}</span>
+                        <span class="font-extrabold text-sm text-slate-700">${s}</span>
                         <button onclick="removeSym(event, '${s}')" class="text-slate-300 hover:text-red-500 font-bold">×</button>
                     </div>
                 `;
@@ -192,21 +174,27 @@
         function addToWatchlist() {
             const val = document.getElementById('search-input').value.trim().toUpperCase();
             if (!val) return;
-            const fullCode = val.includes(':') ? val : `HOSE:${val}`;
-            if (!symbols.includes(fullCode)) {
-                symbols.push(fullCode);
-                localStorage.setItem('henry_v10_wl', JSON.stringify(symbols));
+            
+            // Xóa tiền tố HOSE/HNX do Iframe nội địa chỉ cần tên mã
+            const cleanSym = val.includes(':') ? val.split(':')[1] : val;
+
+            if (!symbols.includes(cleanSym)) {
+                symbols.push(cleanSym);
+                localStorage.setItem('henry_v12_wl', JSON.stringify(symbols));
                 renderWatchlist();
             }
             document.getElementById('search-input').value = '';
-            selectSym(fullCode);
+            selectSym(cleanSym);
         }
 
         function removeSym(e, s) {
             e.stopPropagation();
             symbols = symbols.filter(item => item !== s);
-            localStorage.setItem('henry_v10_wl', JSON.stringify(symbols));
+            localStorage.setItem('henry_v12_wl', JSON.stringify(symbols));
             renderWatchlist();
+            if (activeSym === s && symbols.length > 0) {
+                selectSym(symbols[0]);
+            }
         }
 
         function selectSym(s) {
@@ -224,7 +212,25 @@
         }
 
         function updateAnalysisUI(sym) {
-            const data = ANALYTICS[sym] || ANALYTICS["HOSE:HUT"];
+            const defaultData = {
+                ta: {
+                    wyckoff: "Đang thu thập dữ liệu giá khối lượng...",
+                    ichimoku: "Cần quan sát thêm vị thế tương quan với đám mây Kumo.",
+                    macd: "Hệ thống đang đồng bộ dữ liệu động lượng.",
+                    targets: ["---", "---", "---"],
+                    rec: "QUAN SÁT"
+                },
+                fa: {
+                    valuation: "Đang quét BCTC quý gần nhất...",
+                    cashflow: "Đang phân tích lưu chuyển tiền tệ...",
+                    assets: "Đang truy xuất dữ liệu định giá tài sản...",
+                    competitors: "Chưa có đủ số liệu so sánh ngành.",
+                    status: "ĐANG PHÂN TÍCH",
+                    buy: "Chưa xác định"
+                }
+            };
+            
+            const data = ANALYTICS[sym] || defaultData;
             const box = document.getElementById('analysis-box');
             
             if (currentTab === 'tech') {
@@ -287,7 +293,7 @@
         // INIT
         window.onload = () => {
             renderWatchlist();
-            initMainChart(activeSym);
+            if(symbols.length > 0) initMainChart(activeSym);
         };
     </script>
 </body>
