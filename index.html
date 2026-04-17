@@ -3,156 +3,224 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Henry Pro Invest - TradingView Terminal</title>
+    <title>Henry Pro Invest - Professional Terminal</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
-        body { background-color: #04060e; color: #d1d4dc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif; overflow: hidden; }
-        .terminal-border { border: 1px solid #2a2e39; }
-        .active-tab { border-bottom: 2px solid #2962ff; color: #2962ff; }
-        .glass-header { background: rgba(19, 23, 34, 0.95); backdrop-filter: blur(4px); border-bottom: 1px solid #2a2e39; }
+        body { font-family: 'Inter', sans-serif; background-color: #0a0e17; color: #edeff2; overflow: hidden; }
+        .glass-panel { background: rgba(21, 27, 40, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .active-tab { border-bottom: 2px solid #3b82f6; color: #3b82f6; }
+        .scroll-hidden::-webkit-scrollbar { width: 4px; }
+        .scroll-hidden::-webkit-scrollbar-thumb { background: #2d3748; border-radius: 10px; }
+        .sidebar-title { font-size: 10px; font-weight: 800; letter-spacing: 0.1em; color: #718096; text-transform: uppercase; }
+        .metric-value { font-family: 'Monaco', monospace; font-weight: 600; }
     </style>
 </head>
-<body class="h-screen flex flex-col">
+<body class="h-screen flex flex-col p-2 gap-2">
 
-    <header class="glass-header px-6 py-3 flex justify-between items-center shrink-0">
-        <div class="flex items-center space-x-4">
+    <header class="glass-panel px-6 py-3 rounded-xl flex justify-between items-center shrink-0">
+        <div class="flex items-center space-x-6">
             <span class="text-2xl font-black tracking-tighter text-white">HENRY PRO <span class="text-blue-500">INVEST</span></span>
-            <div class="h-5 w-px bg-slate-700"></div>
-            <span class="text-[10px] uppercase tracking-[0.2em] text-slate-500">Global Market Insight</span>
-        </div>
-        <div class="flex items-center space-x-6 text-xs font-bold">
-            <div class="flex flex-col items-end">
-                <span class="text-green-500">VN-INDEX: 1.802,45</span>
-                <span class="text-[9px] text-slate-500">Real-time via TradingView</span>
+            <div class="hidden md:flex items-center space-x-4">
+                <input type="text" id="search-input" placeholder="Thêm mã (VD: HUT)..." class="bg-slate-900 border border-slate-700 text-xs px-4 py-1.5 rounded-lg outline-none focus:border-blue-500 w-48 uppercase">
+                <button onclick="addToWatchlist()" class="text-blue-500 font-bold text-xs">+ THÊM</button>
             </div>
-            <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded text-[11px] transition">LOGIN TERMINAL</button>
+        </div>
+        <div class="flex items-center space-x-4">
+            <div id="market-status" class="flex items-center space-x-2 text-[10px] font-bold text-green-500 bg-green-500/10 px-3 py-1 rounded-full">
+                <span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span></span>
+                <span>DATA CONNECTED</span>
+            </div>
         </div>
     </header>
 
-    <main class="flex-1 grid grid-cols-12 gap-1 p-1 min-h-0">
+    <main class="flex-1 grid grid-cols-12 gap-2 min-h-0">
         
-        <aside class="col-span-3 flex flex-col gap-1 overflow-hidden">
-            <div class="flex-1 terminal-border rounded bg-[#131722] overflow-hidden">
-                <div class="tradingview-widget-container" style="height:100%; width:100%">
-                    <div class="tradingview-widget-container__widget"></div>
-                    <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-market-quotes.js" async>
-                    {
-                    "width": "100%",
-                    "height": "100%",
-                    "symbolsGroups": [
-                        {
-                        "name": "Chứng Khoán VN",
-                        "originalName": "Stocks",
-                        "symbols": [
-                            { "name": "HOSE:HUT", "displayName": "Tasco (HUT)" },
-                            { "name": "HOSE:STB", "displayName": "Sacombank" },
-                            { "name": "HOSE:VIX", "displayName": "VIX" },
-                            { "name": "HOSE:VIC", "displayName": "Vingroup" },
-                            { "name": "HOSE:VHM", "displayName": "Vinhomes" }
-                        ]
-                        },
-                        {
-                        "name": "Global & Crypto",
-                        "symbols": [
-                            { "name": "FX_IDC:VNINDEX", "displayName": "VN-INDEX" },
-                            { "name": "BINANCE:BTCUSDT", "displayName": "Bitcoin" },
-                            { "name": "OANDA:XAUUSD", "displayName": "Vàng (Gold)" }
-                        ]
-                        }
-                    ],
-                    "showSymbolLogo": true,
-                    "colorTheme": "dark",
-                    "isTransparent": true,
-                    "locale": "vi"
-                    }
-                    </script>
-                </div>
+        <aside class="col-span-12 md:col-span-2 glass-panel rounded-xl flex flex-col overflow-hidden">
+            <div class="p-3 border-b border-slate-800 flex justify-between items-center">
+                <span class="sidebar-title">Watchlist</span>
+                <span id="watchlist-count" class="text-[10px] bg-slate-800 px-2 py-0.5 rounded">0</span>
+            </div>
+            <div id="watchlist-items" class="flex-1 overflow-y-auto scroll-hidden p-2 space-y-1">
                 </div>
         </aside>
 
-        <section class="col-span-6 flex flex-col terminal-border rounded bg-[#131722] overflow-hidden">
-            <div class="tradingview-widget-container" style="height: 100%; width: 100%;">
-                <div id="tradingview_advanced_chart" style="height: 100%; width: 100%;"></div>
-                <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-                <script type="text/javascript">
-                new TradingView.widget({
-                    "autosize": true,
-                    "symbol": "HOSE:HUT",
-                    "interval": "D",
-                    "timezone": "Asia/Ho_Chi_Minh",
-                    "theme": "dark",
-                    "style": "1",
-                    "locale": "vi",
-                    "toolbar_bg": "#f1f3f6",
-                    "enable_publishing": false,
-                    "hide_side_toolbar": false,
-                    "allow_symbol_change": true,
-                    "container_id": "tradingview_advanced_chart"
-                });
-                </script>
-            </div>
-            </section>
+        <section class="col-span-12 md:col-span-7 glass-panel rounded-xl overflow-hidden relative">
+            <div id="tradingview_chart" class="h-full w-full"></div>
+        </section>
 
-        <aside class="col-span-3 flex flex-col gap-1 overflow-hidden">
-            <div class="h-1/2 terminal-border rounded bg-[#131722] overflow-hidden p-2">
-                <div class="tradingview-widget-container">
-                    <div class="tradingview-widget-container__widget"></div>
-                    <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>
-                    {
-                    "interval": "1D",
-                    "width": "100%",
-                    "isTransparent": true,
-                    "height": "100%",
-                    "symbol": "HOSE:HUT",
-                    "showIntervalTabs": true,
-                    "locale": "vi",
-                    "colorTheme": "dark"
-                    }
-                    </script>
-                </div>
+        <aside class="col-span-12 md:col-span-3 flex flex-col gap-2 overflow-hidden">
+            
+            <div class="glass-panel rounded-xl p-1 flex shrink-0">
+                <button onclick="switchTab('tech')" id="tab-tech" class="flex-1 py-2 text-xs font-bold active-tab">KỸ THUẬT (TA)</button>
+                <button onclick="switchTab('fund')" id="tab-fund" class="flex-1 py-2 text-xs font-bold text-slate-500">CƠ BẢN (FA)</button>
             </div>
 
-            <div class="h-1/2 terminal-border rounded bg-[#131722] p-4 flex flex-col justify-between">
-                <div>
-                    <h3 class="text-blue-500 font-bold text-xs uppercase tracking-widest mb-4">Henry AI Strategy</h3>
-                    <div class="space-y-4">
-                        <div class="flex justify-between items-end border-b border-slate-800 pb-2">
-                            <span class="text-xs text-slate-500">Mục tiêu Q2</span>
-                            <span class="text-lg font-bold text-green-400">22,50</span>
-                        </div>
-                        <div class="flex justify-between items-end border-b border-slate-800 pb-2">
-                            <span class="text-xs text-slate-500">Cắt lỗ (Hard)</span>
-                            <span class="text-lg font-bold text-red-500">15,80</span>
-                        </div>
-                    </div>
+            <div id="analysis-content" class="glass-panel rounded-xl flex-1 overflow-y-auto scroll-hidden p-4">
                 </div>
-                <div class="bg-blue-900/20 p-3 rounded text-[11px] text-blue-300 italic leading-relaxed border border-blue-500/20">
-                    "HUT đang hình thành tay cầm của mô hình Cốc tay cầm trên đồ thị Tuần. Dòng tiền thông minh (Smart Money) có dấu hiệu gom hàng tại vùng 16,5 - 16,8."
+
+            <div id="summary-panel" class="glass-panel rounded-xl p-4 border-t-2 border-green-500">
+                <div class="flex justify-between items-center">
+                    <span class="sidebar-title">Khuyến nghị Henry</span>
+                    <span class="bg-green-600 text-[10px] font-black px-2 py-0.5 rounded">STRONG BUY</span>
                 </div>
+                <div class="mt-2 text-lg font-bold text-white tracking-tight">VÙNG MUA: <span id="buy-zone">---</span></div>
             </div>
         </aside>
     </main>
 
-    <footer class="h-10 shrink-0 bg-[#131722] border-t border-slate-800">
-        <div class="tradingview-widget-container">
-            <div class="tradingview-widget-container__widget"></div>
-            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js" async>
-            {
-            "symbols": [
-                { "proName": "FOREXCOM:SPXUSD", "title": "S&P 500" },
-                { "proName": "FX_IDC:VND", "title": "USD/VND" },
-                { "proName": "BITSTAMP:BTCUSD", "title": "Bitcoin" },
-                { "proName": "OANDA:XAUUSD", "title": "Vàng" }
-            ],
-            "showSymbolLogo": true,
-            "colorTheme": "dark",
-            "isTransparent": true,
-            "displayMode": "adaptive",
-            "locale": "vi"
-            }
-            </script>
-        </div>
-    </footer>
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+    <script>
+        // --- 1. QUẢN LÝ DỮ LIỆU ---
+        let watchlist = JSON.parse(localStorage.getItem('henry_watchlist')) || ["HOSE:HUT", "HOSE:STB", "HOSE:VIX"];
+        let activeSymbol = "HOSE:HUT";
 
+        // Dữ liệu Phân tích (Simulated AI Analysis based on your expert criteria)
+        const ANALYSIS_DB = {
+            "HOSE:HUT": {
+                ta: {
+                    wyckoff: "Pha D (Markup). SOS (Sign of Strength) xuất hiện tại nến rút chân 16.5.",
+                    ichimoku: "Giá nằm trên mây Kumo xanh, Tenkan cắt lên Kijun -> Xu hướng tăng mạnh.",
+                    macd: "MACD cắt lên đường Signal, histogram dương mở rộng.",
+                    short: "Tăng lên 18,50", mid: "22,00", long: "28,50"
+                },
+                fa: {
+                    valuation: "P/B 1.2x (Rẻ so với trung bình ngành Hạ tầng 1.8x).",
+                    cashflow: "CFO dương mạnh từ mảng VETC, đảm bảo trả nợ BOT.",
+                    assets: "Sở hữu hệ thống thu phí không dừng lớn nhất VN. Quỹ đất dự án khủng.",
+                    competitors: "CII, HHV (HUT vượt trội về thị phần thanh toán không tiền mặt).",
+                    decision: "ĐỊNH GIÁ RẺ. Khuyến nghị Mua tích lũy vùng 16.5 - 17.0."
+                }
+            },
+            "HOSE:STB": {
+                ta: {
+                    wyckoff: "Pha E. Đang trong giai đoạn bứt phá đỉnh lịch sử.",
+                    ichimoku: "Giá bám dải trên mây, Chikou Span không có vật cản.",
+                    macd: "Đang ở vùng quá mua nhưng chưa có tín hiệu phân kỳ âm.",
+                    short: "36,00", mid: "45,00", long: "70,00"
+                },
+                fa: {
+                    valuation: "Định giá 2026 dựa trên LNST 8.100 tỷ -> P/E kỳ vọng thấp.",
+                    cashflow: "Dòng tiền từ xử lý nợ xấu VAMC về cực lớn.",
+                    assets: "Chất lượng tài sản cải thiện rõ rệt, tỷ lệ nợ xấu < 1%.",
+                    competitors: "ACB, MBB (STB có game riêng về đấu giá cổ phần).",
+                    decision: "HÀNG CHIẾN LƯỢC. Tầm nhìn 2026 giá 70.x."
+                }
+            }
+        };
+
+        // --- 2. TRADINGVIEW CHART ENGINE ---
+        function initChart(symbol) {
+            new TradingView.widget({
+                "autosize": true,
+                "symbol": symbol,
+                "interval": "D",
+                "timezone": "Asia/Ho_Chi_Minh",
+                "theme": "dark",
+                "style": "1",
+                "locale": "vi",
+                "toolbar_bg": "#f1f3f6",
+                "enable_publishing": false,
+                "withdateranges": true,
+                "hide_side_toolbar": false, // Cho phép vẽ
+                "allow_symbol_change": true,
+                "save_image": true,
+                "container_id": "tradingview_chart"
+            });
+            updateAnalysisUI(symbol);
+        }
+
+        // --- 3. UI LOGIC & WATCHLIST ---
+        function renderWatchlist() {
+            const container = document.getElementById('watchlist-items');
+            container.innerHTML = '';
+            watchlist.forEach(sym => {
+                const cleanSym = sym.split(':')[1];
+                const activeClass = sym === activeSymbol ? 'bg-blue-600/20 border-blue-500/50' : 'bg-slate-900/50 border-transparent';
+                container.innerHTML += `
+                    <div onclick="changeActiveSymbol('${sym}')" class="flex justify-between items-center p-3 rounded-lg border cursor-pointer transition ${activeClass}">
+                        <span class="font-bold text-sm">${cleanSym}</span>
+                        <button onclick="removeFromWatchlist(event, '${sym}')" class="text-slate-600 hover:text-red-500">×</button>
+                    </div>
+                `;
+            });
+            document.getElementById('watchlist-count').innerText = watchlist.length;
+        }
+
+        function addToWatchlist() {
+            const input = document.getElementById('search-input');
+            const sym = "HOSE:" + input.value.trim().toUpperCase();
+            if (sym && !watchlist.includes(sym)) {
+                watchlist.push(sym);
+                localStorage.setItem('henry_watchlist', JSON.stringify(watchlist));
+                renderWatchlist();
+            }
+            input.value = '';
+        }
+
+        function removeFromWatchlist(e, sym) {
+            e.stopPropagation();
+            watchlist = watchlist.filter(s => s !== sym);
+            localStorage.setItem('henry_watchlist', JSON.stringify(watchlist));
+            renderWatchlist();
+        }
+
+        function changeActiveSymbol(sym) {
+            activeSymbol = sym;
+            initChart(sym);
+            renderWatchlist();
+        }
+
+        // --- 4. PHÂN TÍCH (TECH & FUND) ---
+        let currentTab = 'tech';
+        function switchTab(tab) {
+            currentTab = tab;
+            document.getElementById('tab-tech').className = tab === 'tech' ? 'flex-1 py-2 text-xs font-bold active-tab' : 'flex-1 py-2 text-xs font-bold text-slate-500';
+            document.getElementById('tab-fund').className = tab === 'fund' ? 'flex-1 py-2 text-xs font-bold active-tab' : 'flex-1 py-2 text-xs font-bold text-slate-500';
+            updateAnalysisUI(activeSymbol);
+        }
+
+        function updateAnalysisUI(sym) {
+            const data = ANALYSIS_DB[sym] || { ta: {wyckoff:"N/A", ichimoku:"N/A", macd:"N/A", short:"N/A", mid:"N/A", long:"N/A"}, fa: {valuation:"N/A", cashflow:"N/A", assets:"N/A", competitors:"N/A", decision:"Chưa có dữ liệu"} };
+            const content = document.getElementById('analysis-content');
+            
+            if (currentTab === 'tech') {
+                content.innerHTML = `
+                    <div class="space-y-4">
+                        <div><span class="sidebar-title">Wyckoff/VSA</span><p class="text-xs text-blue-300 mt-1">${data.ta.wyckoff}</p></div>
+                        <div><span class="sidebar-title">Ichimoku Cloud</span><p class="text-xs text-blue-300 mt-1">${data.ta.ichimoku}</p></div>
+                        <div><span class="sidebar-title">MACD Momentum</span><p class="text-xs text-blue-300 mt-1">${data.ta.macd}</p></div>
+                        <div class="pt-4 border-t border-slate-800">
+                            <span class="sidebar-title">Tầm nhìn Mục tiêu</span>
+                            <div class="grid grid-cols-3 gap-2 mt-2">
+                                <div class="bg-slate-900 p-2 rounded text-center"><span class="block text-[8px] text-slate-500">NGẮN</span><span class="text-xs font-bold text-green-400">${data.ta.short}</span></div>
+                                <div class="bg-slate-900 p-2 rounded text-center"><span class="block text-[8px] text-slate-500">TRUNG</span><span class="text-xs font-bold text-green-400">${data.ta.mid}</span></div>
+                                <div class="bg-slate-900 p-2 rounded text-center"><span class="block text-[8px] text-slate-500">DÀI</span><span class="text-xs font-bold text-green-400">${data.ta.long}</span></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                content.innerHTML = `
+                    <div class="space-y-4">
+                        <div><span class="sidebar-title">Định giá & Tài sản</span><p class="text-xs text-slate-300 mt-1">${data.fa.valuation} <br> ${data.fa.assets}</p></div>
+                        <div><span class="sidebar-title">Cash Flow (CFO)</span><p class="text-xs text-slate-300 mt-1">${data.fa.cashflow}</p></div>
+                        <div><span class="sidebar-title">Đối thủ cạnh tranh</span><p class="text-xs text-slate-300 mt-1">${data.fa.competitors}</p></div>
+                        <div class="bg-blue-600/10 p-3 rounded-lg border border-blue-500/20 mt-4">
+                            <span class="sidebar-title text-blue-400">Kết luận FA</span>
+                            <p class="text-xs text-blue-100 mt-1">${data.fa.decision}</p>
+                        </div>
+                    </div>
+                `;
+            }
+            document.getElementById('buy-zone').innerText = sym === "HOSE:HUT" ? "16,5 - 17,2" : "31,0 - 32,5";
+        }
+
+        // KHỞI ĐỘNG
+        window.onload = () => {
+            renderWatchlist();
+            initChart(activeSymbol);
+        };
+    </script>
 </body>
 </html>
